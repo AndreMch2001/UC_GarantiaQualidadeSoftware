@@ -83,9 +83,9 @@ LaboratorioTestes/
 
 | Arquivo | Conteúdo |
 | ------- | -------- |
-| [docs/REQUISITOS.md](./docs/REQUISITOS.md) | Requisitos do sistema (funcionais, de negócio e não funcionais) |
-| [docs/PLANO_DE_TESTES.md](./docs/PLANO_DE_TESTES.md) | Plano de testes e rastreabilidade |
-| [docs/ROTEIRO_DE_AULA.md](./docs/ROTEIRO_DE_AULA.md) | Roteiro de aula com atividades e defeitos injetados |
+| [docs/REQUISITOS.md](./Documentos/REQUISITOS.md) | Requisitos do sistema (funcionais, de negócio e não funcionais) |
+| [docs/PLANO_DE_TESTES.md](./Documentos/PLANO_DE_TESTES.md) | Plano de testes e rastreabilidade |
+| [docs/ROTEIRO_DE_AULA.md](./Documentos/ROTEIRO_DE_AULA.md) | Roteiro de aula com atividades e defeitos injetados |
 
 ---
 
