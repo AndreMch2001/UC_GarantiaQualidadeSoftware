@@ -1,0 +1,2265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SGA · Laboratório de Qualidade de Software</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#14213D; --ink-2:#2B3A57; --paper:#FFFFFF; --surface:#F3F5F9; --surface-2:#E8ECF3;
+  --line:#D5DBE5; --muted:#586274; --accent:#2F5DA8; --accent-soft:#E3EBF8;
+  --pass:#1B7547; --pass-soft:#E2F2E9; --fail:#B42318; --fail-soft:#FBE7E5;
+  --warn:#9A5B06; --warn-soft:#FBF0DC; --code-bg:#F7F8FB;
+  --sans:"IBM Plex Sans", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#E6EBF5; --ink-2:#C4CCDB; --paper:#141A26; --surface:#1B2331; --surface-2:#242E40;
+    --line:#334058; --muted:#9AA6BB; --accent:#7EA6EA; --accent-soft:#223352;
+    --pass:#5CC48E; --pass-soft:#16362A; --fail:#F2877B; --fail-soft:#40211F;
+    --warn:#E4B062; --warn-soft:#3A2D14; --code-bg:#10151F;
+  }
+}
+:root[data-theme="dark"]{
+    --ink:#E6EBF5; --ink-2:#C4CCDB; --paper:#141A26; --surface:#1B2331; --surface-2:#242E40;
+    --line:#334058; --muted:#9AA6BB; --accent:#7EA6EA; --accent-soft:#223352;
+    --pass:#5CC48E; --pass-soft:#16362A; --fail:#F2877B; --fail-soft:#40211F;
+    --warn:#E4B062; --warn-soft:#3A2D14; --code-bg:#10151F;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%}
+body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:15px; line-height:1.55; min-height:100%}
+h1,h2,h3,h4{line-height:1.2; margin:0 0 .5em; font-weight:600}
+h1{font-size:1.9rem; letter-spacing:-.01em}
+h2{font-size:1.35rem}
+h3{font-size:1.08rem}
+h4{font-size:.95rem}
+p{margin:0 0 .8em; max-width:78ch}
+a{color:var(--accent)}
+code,.mono{font-family:var(--mono); font-size:.88em}
+button,input,select,textarea{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important; animation:none!important}}
+
+/* ---------- estrutura ---------- */
+.topo{position:sticky; top:0; z-index:20; background:var(--paper); border-bottom:1px solid var(--line); padding-top:env(safe-area-inset-top,0px)}
+.topo-linha{display:flex; align-items:center; gap:18px; padding:10px 20px; flex-wrap:wrap}
+.marca{display:flex; align-items:baseline; gap:10px; margin-right:auto}
+.marca b{font-size:1.15rem; letter-spacing:.02em}
+.marca span{color:var(--muted); font-size:.9rem}
+.defeitos{display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+.defeitos-rotulo{font-size:.85rem; color:var(--muted); margin-right:4px}
+.chave{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:var(--surface); border-radius:6px; padding:4px 9px; cursor:pointer; font-size:.84rem}
+.chave[aria-pressed="true"]{background:var(--fail-soft); border-color:var(--fail); color:var(--fail); font-weight:600}
+.chave .luz{width:8px; height:8px; border-radius:50%; background:var(--line)}
+.chave[aria-pressed="true"] .luz{background:var(--fail)}
+.faixa-defeito{display:none; background:var(--fail); color:#fff; padding:6px 20px; font-size:.88rem}
+body.com-defeito .faixa-defeito{display:block}
+:root[data-theme="dark"] .faixa-defeito{color:#1a0f0e}
+.tema{border:1px solid var(--line); background:transparent; border-radius:6px; padding:4px 9px; cursor:pointer; font-size:.84rem}
+
+.corpo{display:grid; grid-template-columns:220px minmax(0,1fr); min-height:calc(100vh - 60px)}
+nav.lateral{border-right:1px solid var(--line); padding:18px 10px; background:var(--surface)}
+nav.lateral button{display:flex; width:100%; text-align:left; gap:10px; align-items:center; background:none; border:0; padding:9px 12px; border-radius:6px; cursor:pointer; color:var(--ink-2)}
+nav.lateral button:hover{background:var(--surface-2)}
+nav.lateral button[aria-current="page"]{background:var(--ink); color:var(--paper); font-weight:600}
+nav.lateral .grupo{font-size:.8rem; color:var(--muted); padding:14px 12px 4px}
+main{padding:28px 32px 60px; max-width:1180px; width:100%}
+section.aba{display:none}
+section.aba.ativa{display:block}
+.intro{color:var(--muted); max-width:78ch}
+
+@media (max-width:860px){
+  .corpo{grid-template-columns:1fr}
+  nav.lateral{display:flex; overflow-x:auto; border-right:0; border-bottom:1px solid var(--line); padding:8px; gap:4px}
+  nav.lateral button{white-space:nowrap; width:auto}
+  nav.lateral .grupo{display:none}
+  main{padding:20px 16px 50px}
+}
+
+/* ---------- componentes ---------- */
+.painel{border:1px solid var(--line); border-radius:8px; padding:18px 20px; margin:0 0 18px; background:var(--paper)}
+.painel.cinza{background:var(--surface)}
+.grade2{display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:18px}
+.grade3{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px}
+.rolagem{overflow-x:auto; max-width:100%}
+table{border-collapse:collapse; width:100%; font-size:.9rem}
+th,td{border-bottom:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top}
+th{font-weight:600; background:var(--surface); white-space:nowrap}
+td.num,th.num{text-align:right; font-variant-numeric:tabular-nums}
+tr.falhou td{background:var(--fail-soft)}
+.form{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px 12px; align-items:end}
+.form label{display:flex; flex-direction:column; font-size:.84rem; color:var(--muted); gap:3px}
+.form label.check{flex-direction:row; align-items:center; gap:8px; color:var(--ink); padding-bottom:8px}
+input[type=text],input[type=number],select,textarea{border:1px solid var(--line); background:var(--paper); border-radius:6px; padding:7px 9px; min-width:0; width:100%}
+textarea{font-family:var(--mono); font-size:.85rem}
+.btn{border:1px solid var(--ink); background:var(--ink); color:var(--paper); border-radius:6px; padding:7px 14px; cursor:pointer; font-weight:500; white-space:nowrap}
+.btn:hover{background:var(--ink-2)}
+.btn.sec{background:var(--paper); color:var(--ink); border-color:var(--line)}
+.btn.sec:hover{background:var(--surface-2)}
+.btn.peq{padding:3px 9px; font-size:.82rem}
+.btn.perigo{background:var(--paper); color:var(--fail); border-color:var(--fail)}
+.acoes{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+.selo{display:inline-block; padding:1px 8px; border-radius:10px; font-size:.78rem; font-weight:600; background:var(--surface-2); color:var(--ink-2); white-space:nowrap}
+.selo.ok,.selo.NORMAL,.selo.ATIVA,.selo.ALOCADA{background:var(--pass-soft); color:var(--pass)}
+.selo.falha,.selo.ESGOTADO,.selo.CANCELADA{background:var(--fail-soft); color:var(--fail)}
+.selo.ALERTA,.selo.TRANCADA,.selo.aviso{background:var(--warn-soft); color:var(--warn)}
+.selo.FORMADA{background:var(--accent-soft); color:var(--accent)}
+.barra{height:8px; background:var(--surface-2); border-radius:4px; overflow:hidden; min-width:90px}
+.barra i{display:block; height:100%; background:var(--pass)}
+.barra i.ALERTA{background:var(--warn)} .barra i.ESGOTADO{background:var(--fail)}
+.msg{border-radius:6px; padding:9px 12px; margin:10px 0 0; font-size:.9rem; border:1px solid}
+.msg.ok{background:var(--pass-soft); border-color:var(--pass); color:var(--pass)}
+.msg.erro{background:var(--fail-soft); border-color:var(--fail); color:var(--fail)}
+.msg code{font-weight:600}
+.segmentos{display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--line); margin:0 0 18px}
+.segmentos button{border:0; background:none; padding:8px 12px; cursor:pointer; border-bottom:2px solid transparent; color:var(--muted)}
+.segmentos button[aria-selected="true"]{border-color:var(--ink); color:var(--ink); font-weight:600}
+.sub{display:none} .sub.ativa{display:block}
+.nota{font-size:.86rem; color:var(--muted)}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:6px; padding:12px 14px; overflow:auto; font-family:var(--mono); font-size:.82rem; line-height:1.5; margin:0 0 12px}
+.dica{border-left:0; background:var(--accent-soft); border-radius:6px; padding:10px 14px; margin:12px 0; font-size:.9rem}
+.kpis{display:flex; gap:26px; flex-wrap:wrap; margin:6px 0 4px}
+.kpi b{display:block; font-size:1.6rem; font-variant-numeric:tabular-nums; line-height:1.1}
+.kpi span{font-size:.82rem; color:var(--muted)}
+
+/* ---------- visão geral ---------- */
+.abertura{display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:28px; align-items:start; margin-bottom:26px}
+@media (max-width:980px){.abertura{grid-template-columns:1fr}}
+.abertura h1{font-size:2.2rem; margin-bottom:.35em}
+.cadeia{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:14px 0 4px; font-size:.86rem}
+.cadeia span{border:1px solid var(--line); border-radius:6px; padding:3px 9px; background:var(--surface)}
+.cadeia em{font-style:normal; color:var(--muted)}
+.roteiro td:first-child{white-space:nowrap; font-variant-numeric:tabular-nums; color:var(--muted)}
+
+/* ---------- grade de salas ---------- */
+.grade-salas td,.grade-salas th{text-align:center; min-width:74px}
+.grade-salas td.livre{color:var(--muted)}
+.grade-salas td.ocupada{background:var(--accent-soft); color:var(--accent); font-weight:600}
+.grade-salas th:first-child,.grade-salas td:first-child{text-align:left}
+
+/* ---------- console de testes ---------- */
+.console{background:#0F1624; color:#D6DEEB; border-radius:8px; padding:14px 16px; font-family:var(--mono); font-size:.8rem; line-height:1.55; max-height:560px; overflow:auto; white-space:pre-wrap}
+.console .ok{color:#6FD39B} .console .fa{color:#FF8F84} .console .cl{color:#9DB8F2; font-weight:500}
+.status{font-weight:600; white-space:nowrap}
+.status.ok{color:var(--pass)} .status.fa{color:var(--fail)} .status.pend{color:var(--muted)}
+.chip{display:inline-block; font-family:var(--mono); font-size:.76rem; padding:0 6px; border-radius:4px; margin:1px 2px; background:var(--surface-2)}
+.chip.ok{background:var(--pass-soft); color:var(--pass)} .chip.fa{background:var(--fail-soft); color:var(--fail)}
+
+/* ---------- caixa-branca ---------- */
+.codigo{font-family:var(--mono); font-size:.82rem; border:1px solid var(--line); border-radius:8px; overflow:auto; background:var(--code-bg)}
+.codigo .l{display:grid; grid-template-columns:44px 26px minmax(0,1fr); white-space:pre; min-height:1.6em; align-items:center}
+.codigo .n{color:var(--muted); text-align:right; padding-right:8px; user-select:none}
+.codigo .g{height:100%; }
+.codigo .l.hit .g{background:var(--pass)} .codigo .l.miss .g{background:var(--fail)} .codigo .l.parcial .g{background:var(--warn)}
+.codigo .l.hit{background:color-mix(in srgb, var(--pass-soft) 70%, transparent)}
+.codigo .l.miss{background:color-mix(in srgb, var(--fail-soft) 80%, transparent)}
+.codigo .l.parcial{background:color-mix(in srgb, var(--warn-soft) 80%, transparent)}
+.codigo .t{padding:0 10px}
+.codigo .mut{background:var(--fail); color:#fff; border-radius:3px; padding:0 3px}
+.medidores{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:0 0 14px}
+.medidor{border:1px solid var(--line); border-radius:8px; padding:10px 12px}
+.medidor b{font-size:1.5rem; font-variant-numeric:tabular-nums}
+.medidor span{display:block; font-size:.8rem; color:var(--muted)}
+.medidor .barra{margin-top:6px}
+.lista-casos label{display:grid; grid-template-columns:22px 62px minmax(0,1fr); gap:6px; align-items:start; padding:6px 4px; border-bottom:1px solid var(--line); font-size:.86rem; cursor:pointer}
+.lista-casos label .id{font-family:var(--mono); font-weight:500}
+.legenda{display:flex; gap:14px; flex-wrap:wrap; font-size:.8rem; color:var(--muted); margin:8px 0}
+.legenda i{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:middle}
+.cfg text{font-family:var(--sans); font-size:12px; fill:var(--ink)}
+.cfg .no{fill:var(--paper); stroke:var(--ink-2); stroke-width:1.4}
+.cfg .dec{fill:var(--accent-soft); stroke:var(--accent)}
+.cfg .ar{stroke:var(--muted); stroke-width:1.3; fill:none; marker-end:url(#seta)}
+.risco td{text-align:center; font-weight:600; font-size:.85rem}
+.risco .r1{background:var(--pass-soft); color:var(--pass)} .risco .r2{background:var(--warn-soft); color:var(--warn)} .risco .r3{background:var(--fail-soft); color:var(--fail)}
+details{border:1px solid var(--line); border-radius:6px; padding:8px 12px; margin:8px 0}
+details summary{cursor:pointer; font-weight:500}
+.oculto{display:none}
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-linha">
+    <div class="marca"><b>SGA</b><span>Sistema de Gestão Acadêmica · laboratório de testes</span></div>
+    <div class="defeitos" role="group" aria-label="Injeção de defeitos">
+      <span class="defeitos-rotulo">Injetar defeito:</span>
+      <button class="chave" data-def="D01" aria-pressed="false" title="RegraAlocacao: capacidade < vagas trocado por <="><span class="luz"></span>D-01</button>
+      <button class="chave" data-def="D02" aria-pressed="false" title="RegraOrcamento.situacao: >= 80 trocado por > 80"><span class="luz"></span>D-02</button>
+      <button class="chave" data-def="D03" aria-pressed="false" title="Matrícula: permite FORMADA → CANCELAR"><span class="luz"></span>D-03</button>
+      <button class="chave" data-def="D04" aria-pressed="false" title="ValidadorAluno: idade > 100 trocado por >= 100"><span class="luz"></span>D-04</button>
+      <button class="chave" data-def="D05" aria-pressed="false" title="exigeAprovacaoDiretoria: || trocado por &&"><span class="luz"></span>D-05</button>
+    </div>
+    <button class="tema" id="btnTema" title="Alternar tema claro/escuro">Tema</button>
+  </div>
+  <div class="faixa-defeito" id="faixaDefeito">Versão com defeito injetado — o sistema e os testes estão usando código alterado.</div>
+</header>
+
+<div class="corpo">
+<nav class="lateral" aria-label="Seções">
+  <button data-aba="inicio" aria-current="page">Visão geral</button>
+  <div class="grupo">Produto</div>
+  <button data-aba="requisitos">Requisitos</button>
+  <button data-aba="sistema">Sistema</button>
+  <button data-aba="banco">Banco de dados</button>
+  <div class="grupo">Qualidade</div>
+  <button data-aba="plano">Plano de teste</button>
+  <button data-aba="cpreta">Caixa-preta</button>
+  <button data-aba="cbranca">Caixa-branca</button>
+  <button data-aba="suite">Suíte completa</button>
+  <button data-aba="relatorio">Relatório</button>
+</nav>
+
+<main id="conteudo">
+
+<!-- ======================= VISÃO GERAL ======================= -->
+<section class="aba ativa" id="aba-inicio">
+  <div class="abertura">
+    <div>
+      <h1>Um sistema acadêmico pequeno, feito para ser testado</h1>
+      <p>O SGA cadastra departamentos com orçamento, cursos, disciplinas, alunos e salas, e distribui as salas entre as disciplinas. Cada regra de negócio foi escrita para exercitar uma técnica de teste vista nas aulas — e cinco defeitos podem ser injetados pelas chaves no topo da página.</p>
+      <div class="cadeia" aria-label="Cadeia de evidência">
+        <span>Atributo 25010</span><em>›</em><span>Requisito</span><em>›</em><span>Critério de aceitação</span><em>›</em><span>Caso de teste</span><em>›</em><span>Execução</span><em>›</em><span>Evidência</span>
+      </div>
+      <p class="nota">Esta página roda sozinha no navegador. O projeto Java (Maven + SQLite + JUnit 5 + JaCoCo) implementa as mesmas regras, com os mesmos identificadores de caso.</p>
+    </div>
+    <div class="painel cinza">
+      <h3>Estado agora</h3>
+      <div class="kpis" id="kpisInicio"></div>
+      <div class="acoes" style="margin-top:12px">
+        <button class="btn" data-ir="suite" data-rodar="1">Executar a suíte completa</button>
+        <button class="btn sec" data-ir="sistema">Abrir o sistema</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grade2">
+    <div class="painel">
+      <h3>Roteiro sugerido para a aula</h3>
+      <table class="roteiro">
+        <tbody>
+          <tr><td>00–15'</td><td><b>Requisitos</b> — encontrar o problema de cada requisito da versão 0.9.</td></tr>
+          <tr><td>15–30'</td><td><b>Sistema</b> — exploratório com charter: tentar quebrar as regras de alocação e de orçamento.</td></tr>
+          <tr><td>30–60'</td><td><b>Caixa-preta</b> — prever o resultado de cada caso antes de executar.</td></tr>
+          <tr><td>60–90'</td><td><b>Caixa-branca</b> — montar o conjunto de casos, ler a cobertura, ligar D-05.</td></tr>
+          <tr><td>90–115'</td><td><b>Suíte e relatório</b> — cada grupo liga um defeito, registra o incidente e faz o reteste.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="painel">
+      <h3>Os cinco defeitos injetáveis</h3>
+      <table>
+        <thead><tr><th>ID</th><th>Onde</th><th>Alteração</th></tr></thead>
+        <tbody>
+          <tr><td>D-01</td><td>RegraAlocacao</td><td><code>capacidade &lt; vagas</code> → <code>&lt;=</code></td></tr>
+          <tr><td>D-02</td><td>RegraOrcamento.situacao</td><td><code>&gt;= 80</code> → <code>&gt; 80</code></td></tr>
+          <tr><td>D-03</td><td>MaquinaEstadosMatricula</td><td>aceita FORMADA → CANCELAR</td></tr>
+          <tr><td>D-04</td><td>ValidadorAluno</td><td><code>idade &gt; 100</code> → <code>&gt;= 100</code></td></tr>
+          <tr><td>D-05</td><td>exigeAprovacaoDiretoria</td><td><code>||</code> → <code>&amp;&amp;</code></td></tr>
+        </tbody>
+      </table>
+      <p class="nota" style="margin-top:10px">Com um defeito ligado, o sistema também passa a se comportar errado — dá para encontrá-lo pela interface, como faria um testador sem acesso ao código.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= REQUISITOS ======================= -->
+<section class="aba" id="aba-requisitos">
+  <h2>Especificação de requisitos — SGA 1.0</h2>
+  <p class="intro">Cliente fictício: Centro Universitário UniVale. Os requisitos são a <b>base de teste</b>: cada caso de teste deste laboratório aponta para um deles.</p>
+  <div class="segmentos" role="tablist" data-grupo="req">
+    <button role="tab" aria-selected="true" data-sub="req-rf">Funcionais</button>
+    <button role="tab" aria-selected="false" data-sub="req-rn">Regras de negócio</button>
+    <button role="tab" aria-selected="false" data-sub="req-rnf">Não funcionais</button>
+    <button role="tab" aria-selected="false" data-sub="req-ac">Critérios de aceitação</button>
+    <button role="tab" aria-selected="false" data-sub="req-val">Exercício: validar a versão 0.9</button>
+  </div>
+  <div class="sub ativa" id="req-rf"><div class="rolagem"><table id="tabRF"></table></div></div>
+  <div class="sub" id="req-rn"><div class="rolagem"><table id="tabRN"></table></div></div>
+  <div class="sub" id="req-rnf"><div class="rolagem"><table id="tabRNF"></table></div></div>
+  <div class="sub" id="req-ac">
+    <div class="grade2">
+      <div>
+        <h3>RF-08 / RN-05 — Alocar sala (Given-When-Then)</h3>
+<pre>Funcionalidade: Alocação de salas
+
+  Cenário: CA-01 Alocar disciplina de laboratório em laboratório livre
+    Dado que a sala "LAB-1" é do tipo LABORATORIO com 30 lugares
+    E que a disciplina "BD1" exige laboratório e tem 30 vagas
+    E que a sala "LAB-1" está livre na terça à noite
+    Quando a secretaria aloca "BD1" em "LAB-1" na terça à noite
+    Então a alocação é gravada
+    E a grade mostra "BD1" na célula LAB-1 / TER / NOITE
+
+  Cenário: CA-02 Bloquear sala já ocupada
+    Dado que "GQS" já está alocada em "S-101" na segunda à noite
+    Quando a secretaria tenta alocar "BD1" em "S-101" na segunda à noite
+    Então o sistema bloqueia informando que a sala está ocupada
+    E nenhuma alocação nova é gravada</pre>
+      </div>
+      <div>
+        <h3>RF-05 / RN-04 — Registrar despesa (regra a regra)</h3>
+        <ul>
+          <li>Despesa de valor zero ou negativo é recusada com a mensagem de valor inválido.</li>
+          <li>Despesa que faz o executado passar do orçado é recusada; nada é gravado.</li>
+          <li>Despesa igual ao saldo restante é aceita e a situação passa a ESGOTADO.</li>
+          <li>Ao mudar de faixa (NORMAL → ALERTA → ESGOTADO), a diretoria recebe exatamente um e-mail.</li>
+          <li>Valor acima de R$ 10.000,00 <b>ou</b> execução ≥ 90% após a despesa exige aprovação da diretoria.</li>
+        </ul>
+        <div class="dica">Critério de aceitação é binário: atende ou não atende. Se duas pessoas podem discordar olhando o mesmo resultado, falta número, condição ou dado observável.</div>
+      </div>
+    </div>
+  </div>
+  <div class="sub" id="req-val">
+    <p class="intro">Estes requisitos estavam na versão 0.9. Para cada um, diga qual característica de um bom requisito ele viola (completo, não ambíguo, consistente, verificável, rastreável, viável) antes de revelar a resposta.</p>
+    <div id="listaValidacao"></div>
+  </div>
+</section>
+
+<!-- ======================= SISTEMA ======================= -->
+<section class="aba" id="aba-sistema">
+  <h2>Sistema</h2>
+  <p class="intro">Tudo o que for gravado aqui passa pelas mesmas regras do projeto Java e por um banco em memória com as restrições de <code>schema.sql</code>. Os botões de situação da matrícula ficam todos habilitados de propósito: bloquear transições proibidas é trabalho da regra, e é isso que se quer testar.</p>
+  <div class="segmentos" role="tablist" data-grupo="sis">
+    <button role="tab" aria-selected="true" data-sub="sis-dep">Departamentos e orçamento</button>
+    <button role="tab" aria-selected="false" data-sub="sis-cur">Cursos</button>
+    <button role="tab" aria-selected="false" data-sub="sis-dis">Disciplinas</button>
+    <button role="tab" aria-selected="false" data-sub="sis-sal">Salas</button>
+    <button role="tab" aria-selected="false" data-sub="sis-alu">Alunos</button>
+    <button role="tab" aria-selected="false" data-sub="sis-alo">Distribuição de salas</button>
+  </div>
+
+  <div class="sub ativa" id="sis-dep">
+    <div class="grade2">
+      <form class="painel" id="fDep" autocomplete="off">
+        <h3>Novo departamento <span class="nota">RF-01</span></h3>
+        <div class="form">
+          <label>Código (3–6 letras maiúsculas)<input type="text" name="codigo" placeholder="ENG"></label>
+          <label>Nome<input type="text" name="nome" placeholder="Engenharias"></label>
+          <label>Orçamento anual (R$)<input type="number" name="orcamento" step="0.01" placeholder="100000"></label>
+          <button class="btn" type="submit">Cadastrar departamento</button>
+        </div>
+        <div data-msg></div>
+      </form>
+      <form class="painel" id="fDesp" autocomplete="off">
+        <h3>Registrar despesa <span class="nota">RF-05</span></h3>
+        <div class="form">
+          <label>Departamento<select name="dep" data-opcoes="departamento"></select></label>
+          <label>Descrição<input type="text" name="descricao" placeholder="Licenças de software"></label>
+          <label>Valor (R$)<input type="number" name="valor" step="0.01" placeholder="1500"></label>
+          <button class="btn" type="submit">Registrar despesa</button>
+        </div>
+        <div data-msg></div>
+      </form>
+    </div>
+    <div class="painel">
+      <h3>Situação orçamentária <span class="nota">RF-06 · RN-03</span></h3>
+      <div class="rolagem"><table id="tabDep"></table></div>
+      <form class="acoes" id="fOrc" style="margin-top:12px" autocomplete="off">
+        <span class="nota">Alterar orçamento (RN-09):</span>
+        <select name="dep" data-opcoes="departamento" style="width:auto"></select>
+        <input type="number" name="valor" step="0.01" placeholder="novo valor" style="width:150px">
+        <button class="btn sec" type="submit">Alterar orçamento</button>
+      </form>
+      <div data-msg id="msgOrc"></div>
+    </div>
+    <div class="grade2">
+      <div class="painel">
+        <h3>Despesas registradas</h3>
+        <div class="rolagem"><table id="tabDesp"></table></div>
+      </div>
+      <div class="painel cinza">
+        <h3>Caixa de saída — avisos à diretoria <span class="nota">RN-07</span></h3>
+        <p class="nota">É o que o dublê <i>spy</i> registra no teste UD-01: um aviso por mudança de faixa, nenhum a mais.</p>
+        <div id="caixaEmails"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub" id="sis-cur">
+    <form class="painel" id="fCur" autocomplete="off">
+      <h3>Novo curso <span class="nota">RF-02</span></h3>
+      <div class="form">
+        <label>Código<input type="text" name="codigo" placeholder="ES"></label>
+        <label>Nome<input type="text" name="nome" placeholder="Engenharia de Software"></label>
+        <label>Duração (semestres)<input type="number" name="duracao" placeholder="8"></label>
+        <label>Departamento<select name="dep" data-opcoes="departamento"></select></label>
+        <button class="btn" type="submit">Cadastrar curso</button>
+      </div>
+      <div data-msg></div>
+    </form>
+    <div class="painel"><div class="rolagem"><table id="tabCur"></table></div></div>
+  </div>
+
+  <div class="sub" id="sis-dis">
+    <form class="painel" id="fDis" autocomplete="off">
+      <h3>Nova disciplina <span class="nota">RF-03 · RN-11</span></h3>
+      <div class="form">
+        <label>Código<input type="text" name="codigo" placeholder="GQS"></label>
+        <label>Nome<input type="text" name="nome" placeholder="Garantia da Qualidade de Software"></label>
+        <label>Carga horária (h)<input type="number" name="ch" placeholder="80"></label>
+        <label>Vagas<input type="number" name="vagas" placeholder="40"></label>
+        <label>Curso<select name="curso" data-opcoes="curso"></select></label>
+        <label class="check"><input type="checkbox" name="lab"> Exige laboratório</label>
+        <button class="btn" type="submit">Cadastrar disciplina</button>
+      </div>
+      <div data-msg></div>
+    </form>
+    <div class="painel"><div class="rolagem"><table id="tabDis"></table></div></div>
+  </div>
+
+  <div class="sub" id="sis-sal">
+    <form class="painel" id="fSal" autocomplete="off">
+      <h3>Nova sala <span class="nota">RF-07</span></h3>
+      <div class="form">
+        <label>Código<input type="text" name="codigo" placeholder="S-201"></label>
+        <label>Capacidade (10–200)<input type="number" name="capacidade" placeholder="40"></label>
+        <label>Tipo<select name="tipo"><option value="COMUM">COMUM</option><option value="LABORATORIO">LABORATORIO</option></select></label>
+        <button class="btn" type="submit">Cadastrar sala</button>
+      </div>
+      <div data-msg></div>
+    </form>
+    <div class="painel"><div class="rolagem"><table id="tabSal"></table></div></div>
+  </div>
+
+  <div class="sub" id="sis-alu">
+    <form class="painel" id="fAlu" autocomplete="off">
+      <h3>Novo aluno <span class="nota">RF-04 · RN-01 · RN-02</span></h3>
+      <div class="form">
+        <label>Nome<input type="text" name="nome" placeholder="Ana Souza"></label>
+        <label>E-mail<input type="text" name="email" placeholder="ana@aluno.univale.edu.br"></label>
+        <label>Idade<input type="text" name="idade" placeholder="19" inputmode="numeric"></label>
+        <label>Curso<select name="curso" data-opcoes="curso"></select></label>
+        <button class="btn" type="submit">Cadastrar aluno</button>
+      </div>
+      <div data-msg></div>
+    </form>
+    <div class="painel">
+      <h3>Alunos e situação da matrícula <span class="nota">RF-10 · RN-06</span></h3>
+      <div class="rolagem"><table id="tabAlu"></table></div>
+      <div data-msg id="msgAlu"></div>
+    </div>
+  </div>
+
+  <div class="sub" id="sis-alo">
+    <form class="painel" id="fAlo" autocomplete="off">
+      <h3>Alocar sala <span class="nota">RF-08 · RN-05</span></h3>
+      <div class="form">
+        <label>Disciplina<select name="disc" data-opcoes="disciplina"></select></label>
+        <label>Sala<select name="sala" data-opcoes="sala"></select></label>
+        <label>Dia<select name="dia"><option>SEG</option><option>TER</option><option>QUA</option><option>QUI</option><option>SEX</option><option>SAB</option></select></label>
+        <label>Turno<select name="turno"><option value="MANHA">MANHÃ</option><option value="TARDE">TARDE</option><option value="NOITE" selected>NOITE</option></select></label>
+        <button class="btn" type="submit">Alocar sala</button>
+      </div>
+      <div data-msg></div>
+    </form>
+    <div class="painel">
+      <div class="acoes" style="justify-content:space-between; margin-bottom:10px">
+        <h3 style="margin:0">Grade de ocupação <span class="nota">RF-09</span></h3>
+        <div class="segmentos" role="tablist" data-grupo="turno" style="margin:0; border:0">
+          <button role="tab" aria-selected="false" data-turno="MANHA">Manhã</button>
+          <button role="tab" aria-selected="false" data-turno="TARDE">Tarde</button>
+          <button role="tab" aria-selected="true" data-turno="NOITE">Noite</button>
+        </div>
+      </div>
+      <div class="rolagem"><table class="grade-salas" id="tabGrade"></table></div>
+      <div class="acoes" style="margin-top:14px">
+        <button class="btn sec peq" id="btnCarga">Medir: grade com 500 alocações (RNF-03)</button>
+        <span class="nota" id="resCarga"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= BANCO ======================= -->
+<section class="aba" id="aba-banco">
+  <h2>Banco de dados</h2>
+  <p class="intro">O projeto Java usa SQLite (<code>sga.db</code>). Aqui o banco roda em memória no navegador, com as mesmas restrições: chave primária, chave estrangeira, UNIQUE e CHECK. Se uma regra em Java tiver defeito, o banco ainda barra o dado inconsistente — é a defesa em profundidade que o teste CI-03 comprova.</p>
+  <div class="segmentos" role="tablist" data-grupo="bd">
+    <button role="tab" aria-selected="true" data-sub="bd-tab">Tabelas</button>
+    <button role="tab" aria-selected="false" data-sub="bd-sql">Registro de SQL</button>
+    <button role="tab" aria-selected="false" data-sub="bd-sch">schema.sql</button>
+    <button role="tab" aria-selected="false" data-sub="bd-der">Modelo de dados</button>
+  </div>
+  <div class="sub ativa" id="bd-tab">
+    <div class="acoes" style="margin-bottom:12px">
+      <select id="selTabela" style="width:auto"></select>
+      <button class="btn sec" id="btnRestaurar">Restaurar dados de exemplo</button>
+      <button class="btn perigo" id="btnApagar">Apagar todos os dados</button>
+    </div>
+    <div class="painel"><div class="rolagem"><table id="tabBanco"></table></div></div>
+  </div>
+  <div class="sub" id="bd-sql">
+    <p class="nota">Toda instrução usa parâmetros (<code>?</code>) — o texto digitado nunca é colado dentro do SQL (RNF-05). Tente cadastrar um aluno chamado <code>Robert'); DROP TABLE aluno;--</code> e veja como ele aparece aqui.</p>
+    <pre id="logSql" style="max-height:520px"></pre>
+  </div>
+  <div class="sub" id="bd-sch"><pre id="preSchema"></pre></div>
+  <div class="sub" id="bd-der">
+    <div class="painel"><div id="der"></div></div>
+  </div>
+</section>
+
+<!-- ======================= PLANO ======================= -->
+<section class="aba" id="aba-plano">
+  <h2>Plano de teste — ISO/IEC/IEEE 29119-3</h2>
+  <p class="intro">Versão resumida do documento <code>docs/PLANO_DE_TESTES.md</code>. A matriz de rastreabilidade no fim da página é viva: depois de executar a suíte, cada caso aparece verde ou vermelho.</p>
+  <div id="planoConteudo"></div>
+</section>
+
+<!-- ======================= CAIXA-PRETA ======================= -->
+<section class="aba" id="aba-cpreta">
+  <h2>Caixa-preta — técnicas baseadas na especificação</h2>
+  <p class="intro">Olha só entrada e saída, a partir do requisito. Antes de clicar em executar, preveja o resultado de cada caso: essa previsão é o <b>resultado esperado</b>, e ela tem que vir do requisito, não do sistema.</p>
+  <div class="acoes" style="margin-bottom:16px">
+    <button class="btn" id="btnRodarCP">Executar todas as técnicas</button>
+    <span id="resumoCP" class="nota"></span>
+  </div>
+  <div id="cpConteudo"></div>
+</section>
+
+<!-- ======================= CAIXA-BRANCA ======================= -->
+<section class="aba" id="aba-cbranca">
+  <h2>Caixa-branca — cobertura e caminhos</h2>
+  <p class="intro">Escolha o método, marque os casos que entram no conjunto e execute. As linhas ficam verdes quando foram executadas, vermelhas quando nenhum caso passou por elas e amarelas quando a decisão só foi exercitada para um lado.</p>
+  <div class="segmentos" role="tablist" data-grupo="cb">
+    <button role="tab" aria-selected="true" data-metodo="EAD">exigeAprovacaoDiretoria</button>
+    <button role="tab" aria-selected="false" data-metodo="AVL">avaliar (alocação)</button>
+    <button role="tab" aria-selected="false" data-metodo="SIT">situacao (orçamento)</button>
+  </div>
+  <div class="grade2" style="grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)">
+    <div>
+      <div class="medidores" id="medidores"></div>
+      <div class="codigo" id="codigoCB"></div>
+      <div class="legenda"><span><i style="background:var(--pass)"></i>executada</span><span><i style="background:var(--warn)"></i>decisão parcial</span><span><i style="background:var(--fail)"></i>nunca executada</span></div>
+      <div id="extraCB"></div>
+    </div>
+    <div>
+      <div class="painel">
+        <h3>Conjunto de casos</h3>
+        <div class="lista-casos" id="listaCB"></div>
+        <div class="acoes" style="margin-top:12px">
+          <button class="btn" id="btnRodarCB">Executar conjunto</button>
+          <button class="btn sec peq" id="btnLimparCB">Desmarcar todos</button>
+        </div>
+      </div>
+      <div class="painel cinza" id="analiseCB"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= SUÍTE ======================= -->
+<section class="aba" id="aba-suite">
+  <h2>Suíte completa — o equivalente a <code>mvn test</code></h2>
+  <p class="intro">São os mesmos casos das classes JUnit do projeto Java, com os mesmos identificadores: caixa-preta (CT), caixa-branca (CB), integração com o banco (CI) e unidade com dublês (UD).</p>
+  <div class="acoes" style="margin-bottom:14px">
+    <button class="btn" id="btnRodarSuite">Executar suíte</button>
+    <button class="btn sec" id="btnMatriz">Matriz de detecção de defeitos</button>
+    <label class="nota"><input type="checkbox" id="soFalhas"> mostrar só falhas</label>
+  </div>
+  <div id="resumoSuite"></div>
+  <div class="console" id="consoleSuite" aria-live="polite">$ mvn test
+(clique em "Executar suíte")</div>
+  <div id="matrizDefeitos" style="margin-top:18px"></div>
+</section>
+
+<!-- ======================= RELATÓRIO ======================= -->
+<section class="aba" id="aba-relatorio">
+  <h2>Registro de execução, incidentes e relatório de conclusão</h2>
+  <p class="intro">Executar sem registrar é o mesmo que não ter executado. Esta página monta o registro a partir da última execução da suíte; para cada falha, um relato de incidente já vem preenchido com o obtido e o esperado — severidade e prioridade ficam com o grupo.</p>
+  <div id="relatorioConteudo"></div>
+</section>
+
+</main>
+</div>
+<script>
+"use strict";
+/* =====================================================================
+   SGA — núcleo: regras espelhadas do Java, defeitos injetáveis,
+   sondas de cobertura, banco em memória com restrições e serviços.
+   ===================================================================== */
+
+/* ---------- defeitos injetáveis (mesmos IDs do ROTEIRO_DE_AULA.md) ---------- */
+const DEF = { D01: false, D02: false, D03: false, D04: false, D05: false };
+const DEF_INFO = {
+  D01: { onde: "RegraAlocacao.avaliar", mudanca: "capacidade < vagas → capacidade <= vagas", req: "RN-05" },
+  D02: { onde: "RegraOrcamento.situacao", mudanca: "percentual >= 80 → percentual > 80", req: "RN-03" },
+  D03: { onde: "MaquinaEstadosMatricula", mudanca: "aceita FORMADA --CANCELAR--> CANCELADA", req: "RN-06" },
+  D04: { onde: "ValidadorAluno.validarIdade", mudanca: "idade > 100 → idade >= 100", req: "RN-01" },
+  D05: { onde: "RegraOrcamento.exigeAprovacaoDiretoria", mudanca: "|| → &&", req: "RN-08" }
+};
+function comDefeitos(mapa, fn) {
+  const salvo = Object.assign({}, DEF);
+  Object.keys(DEF).forEach(k => { DEF[k] = !!(mapa && mapa[k]); });
+  try { return fn(); } finally { Object.assign(DEF, salvo); }
+}
+
+/* ---------- exceções ---------- */
+class ErroSGA extends Error {
+  constructor(codigo, mensagem, camada) {
+    super(mensagem);
+    this.codigo = codigo;
+    this.camada = camada || "regra"; // "regra" = RegraException; "banco" = DadosException
+  }
+}
+
+/* ---------- sondas de cobertura (o "JaCoCo" do laboratório) ---------- */
+const COB = {
+  atual: null,
+  iniciar() { this.atual = {}; },
+  parar() { const r = this.atual; this.atual = null; return r; },
+  reg(met) {
+    if (!this.atual) return null;
+    return this.atual[met] || (this.atual[met] = { linhas: new Set(), dec: {}, cond: {} });
+  },
+  l(met, n) { const r = this.reg(met); if (r) r.linhas.add(n); },
+  d(met, id, v) { const r = this.reg(met); if (r) { (r.dec[id] || (r.dec[id] = { T: 0, F: 0 }))[v ? "T" : "F"]++; } return v; },
+  c(met, id, v) { const r = this.reg(met); if (r) { (r.cond[id] || (r.cond[id] = { T: 0, F: 0 }))[v ? "T" : "F"]++; } return v; }
+};
+
+/* ---------- regras (pacote br.edu.sga.regras) ---------- */
+const EMAIL_RE = /^[\w.+-]+@[\w-]+(\.[\w-]+)+$/;
+const COD_DEP_RE = /^[A-Z]{3,6}$/;
+const COD_GERAL_RE = /^[A-Z0-9-]{2,12}$/;
+const vazio = s => s === null || s === undefined || String(s).trim() === "";
+
+const R = {
+  /* ValidadorAluno */
+  converterIdade(texto) {
+    if (vazio(texto)) throw new ErroSGA("IDADE_OBRIGATORIA", "Preencha a idade do aluno.");
+    const t = String(texto).trim();
+    if (!/^[+-]?\d+$/.test(t)) throw new ErroSGA("IDADE_NAO_NUMERICA", "Digite a idade usando apenas números inteiros.");
+    return parseInt(t, 10);
+  },
+  validarIdade(idade) {
+    const acima = DEF.D04 ? idade >= 100 : idade > 100;
+    if (idade < 16 || acima) throw new ErroSGA("IDADE_INVALIDA", "A idade deve estar entre 16 e 100 anos.");
+  },
+  validarEmail(email) {
+    if (vazio(email)) throw new ErroSGA("EMAIL_OBRIGATORIO", "Preencha o e-mail do aluno.");
+    if (!EMAIL_RE.test(String(email).trim())) throw new ErroSGA("EMAIL_INVALIDO", "Informe um e-mail no formato nome@dominio.com.");
+  },
+  validarNome(nome) {
+    if (vazio(nome)) throw new ErroSGA("NOME_OBRIGATORIO", "Preencha o nome do aluno.");
+    const n = String(nome).trim().length;
+    if (n < 3 || n > 100) throw new ErroSGA("NOME_TAMANHO", "O nome deve ter entre 3 e 100 caracteres.");
+  },
+
+  /* ValidadorCadastro */
+  validarCodigoDepartamento(c) {
+    if (c === null || c === undefined || !COD_DEP_RE.test(c))
+      throw new ErroSGA("CODIGO_INVALIDO", "O código do departamento deve ter de 3 a 6 letras maiúsculas (ex.: ENG).");
+  },
+  validarCodigo(c) {
+    if (c === null || c === undefined || !COD_GERAL_RE.test(c))
+      throw new ErroSGA("CODIGO_INVALIDO", "Use de 2 a 12 caracteres: letras maiúsculas, números ou hífen (ex.: GQS-01).");
+  },
+  validarNomeObrigatorio(n) { if (vazio(n)) throw new ErroSGA("NOME_OBRIGATORIO", "Preencha o nome."); },
+  validarOrcamentoAnual(v) {
+    if (!Number.isFinite(v)) throw new ErroSGA("VALOR_OBRIGATORIO", "Informe o orçamento anual em reais.");
+    if (v < 0) throw new ErroSGA("ORCAMENTO_NEGATIVO", "O orçamento anual não pode ser negativo.");
+  },
+  inteiro(v, codigo, msg) { if (!Number.isInteger(v)) throw new ErroSGA(codigo, msg); },
+  validarDuracaoCurso(s) {
+    R.inteiro(s, "DURACAO_INVALIDA", "A duração do curso deve ser de 1 a 12 semestres.");
+    if (s < 1 || s > 12) throw new ErroSGA("DURACAO_INVALIDA", "A duração do curso deve ser de 1 a 12 semestres.");
+  },
+  validarCargaHoraria(h) {
+    R.inteiro(h, "CARGA_HORARIA_INVALIDA", "A carga horária deve ser 20, 40, 60, 80, 100 ou 120 horas.");
+    if (h < 20 || h > 120 || h % 20 !== 0) throw new ErroSGA("CARGA_HORARIA_INVALIDA", "A carga horária deve ser 20, 40, 60, 80, 100 ou 120 horas.");
+  },
+  validarVagas(v) {
+    R.inteiro(v, "VAGAS_INVALIDAS", "O número de vagas deve ser de 1 a 200.");
+    if (v < 1 || v > 200) throw new ErroSGA("VAGAS_INVALIDAS", "O número de vagas deve ser de 1 a 200.");
+  },
+  validarCapacidadeSala(c) {
+    R.inteiro(c, "CAPACIDADE_INVALIDA", "A capacidade da sala deve ser de 10 a 200 lugares.");
+    if (c < 10 || c > 200) throw new ErroSGA("CAPACIDADE_INVALIDA", "A capacidade da sala deve ser de 10 a 200 lugares.");
+  },
+
+  /* RegraOrcamento — linhas numeradas como no visor da aba Caixa-branca */
+  percentualExecutado(orcado, executado) {
+    if (orcado <= 0) throw new ErroSGA("ORCAMENTO_ZERADO", "Defina um orçamento anual maior que zero.");
+    return Math.round(executado / orcado * 10000) / 100;
+  },
+  situacao(orcado, executado) {
+    COB.l("SIT", 1); COB.l("SIT", 2);
+    const p = R.percentualExecutado(orcado, executado);
+    COB.l("SIT", 3);
+    if (COB.d("SIT", "d1", COB.c("SIT", "C1", p >= 100))) { COB.l("SIT", 4); return "ESGOTADO"; }
+    COB.l("SIT", 6);
+    const alerta = DEF.D02 ? p > 80 : p >= 80;
+    if (COB.d("SIT", "d2", COB.c("SIT", "C2", alerta))) { COB.l("SIT", 7); return "ALERTA"; }
+    COB.l("SIT", 9);
+    return "NORMAL";
+  },
+  centavos: v => Math.round(v * 100),
+  validarDespesa(orcado, executado, valor) {
+    if (!Number.isFinite(valor) || valor <= 0) throw new ErroSGA("VALOR_INVALIDO", "O valor da despesa deve ser maior que zero.");
+    if (R.centavos(executado) + R.centavos(valor) > R.centavos(orcado))
+      throw new ErroSGA("SALDO_INSUFICIENTE", "A despesa ultrapassa o saldo do departamento. Reduza o valor ou solicite suplementação.");
+  },
+  exigeAprovacaoDiretoria(valor, pct) {
+    COB.l("EAD", 1); COB.l("EAD", 2);
+    const a = COB.c("EAD", "A", valor > 10000);
+    let dec;
+    if (DEF.D05) dec = a && COB.c("EAD", "B", pct >= 90);   // curto-circuito preservado
+    else dec = a || COB.c("EAD", "B", pct >= 90);
+    if (COB.d("EAD", "d1", dec)) { COB.l("EAD", 3); return true; }
+    COB.l("EAD", 5);
+    return false;
+  },
+
+  /* RegraAlocacao */
+  avaliar(salaLivre, capacidade, vagas, exigeLab, tipo) {
+    COB.l("AVL", 1); COB.l("AVL", 3);
+    if (COB.d("AVL", "d1", COB.c("AVL", "C1", !salaLivre))) { COB.l("AVL", 4); return "BLOQUEIO_SALA_OCUPADA"; }
+    COB.l("AVL", 6);
+    const falta = DEF.D01 ? capacidade <= vagas : capacidade < vagas;
+    if (COB.d("AVL", "d2", COB.c("AVL", "C2", falta))) { COB.l("AVL", 7); return "BLOQUEIO_CAPACIDADE"; }
+    COB.l("AVL", 9);
+    const incompat = COB.c("AVL", "C3a", exigeLab) && COB.c("AVL", "C3b", tipo !== "LABORATORIO");
+    if (COB.d("AVL", "d3", incompat)) { COB.l("AVL", 10); return "BLOQUEIO_TIPO_SALA"; }
+    COB.l("AVL", 12);
+    return "ALOCADA";
+  },
+
+  /* MaquinaEstadosMatricula */
+  TRANSICOES: {
+    ATIVA: { TRANCAR: "TRANCADA", CONCLUIR: "FORMADA", CANCELAR: "CANCELADA" },
+    TRANCADA: { REATIVAR: "ATIVA", CANCELAR: "CANCELADA" }
+  },
+  aplicar(atual, evento) {
+    let prox = (R.TRANSICOES[atual] || {})[evento];
+    if (DEF.D03 && atual === "FORMADA" && evento === "CANCELAR") prox = "CANCELADA";
+    if (!prox) throw new ErroSGA("TRANSICAO_INVALIDA", "Não é possível aplicar " + evento + " a uma matrícula " + atual + ".");
+    return prox;
+  }
+};
+
+const MENSAGEM_ALOCACAO = {
+  ALOCADA: "Sala alocada.",
+  BLOQUEIO_SALA_OCUPADA: "Sala ocupada neste dia e turno. Escolha outra sala ou outro horário.",
+  BLOQUEIO_CAPACIDADE: "A sala tem menos lugares do que as vagas da disciplina. Escolha uma sala maior.",
+  BLOQUEIO_TIPO_SALA: "Esta disciplina exige laboratório. Escolha uma sala do tipo LABORATORIO."
+};
+
+/* =====================================================================
+   BANCO EM MEMÓRIA — mesmas restrições do schema.sql
+   ===================================================================== */
+const SCHEMA_SQL = `-- SGA — Sistema de Gestão Acadêmica
+-- Banco relacional SQLite. A integridade é garantida em DUAS camadas:
+--   1) regras de negócio em Java (pacote br.edu.sga.regras)
+--   2) restrições do próprio banco (NOT NULL, UNIQUE, CHECK, FOREIGN KEY)
+-- Se a camada 1 tiver defeito, a camada 2 ainda impede dado inconsistente.
+
+CREATE TABLE IF NOT EXISTS departamento (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo           TEXT    NOT NULL UNIQUE CHECK (length(codigo) BETWEEN 3 AND 6),
+    nome             TEXT    NOT NULL,
+    orcamento_anual  REAL    NOT NULL CHECK (orcamento_anual >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS curso (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo             TEXT    NOT NULL UNIQUE,
+    nome               TEXT    NOT NULL,
+    duracao_semestres  INTEGER NOT NULL CHECK (duracao_semestres BETWEEN 1 AND 12),
+    departamento_id    INTEGER NOT NULL REFERENCES departamento(id) ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS disciplina (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo             TEXT    NOT NULL UNIQUE,
+    nome               TEXT    NOT NULL,
+    carga_horaria      INTEGER NOT NULL CHECK (carga_horaria BETWEEN 20 AND 120),
+    vagas              INTEGER NOT NULL CHECK (vagas BETWEEN 1 AND 200),
+    exige_laboratorio  INTEGER NOT NULL DEFAULT 0 CHECK (exige_laboratorio IN (0, 1)),
+    curso_id           INTEGER NOT NULL REFERENCES curso(id) ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS aluno (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    matricula  TEXT    NOT NULL UNIQUE,
+    nome       TEXT    NOT NULL,
+    email      TEXT    NOT NULL UNIQUE,
+    idade      INTEGER NOT NULL CHECK (idade BETWEEN 16 AND 100),
+    curso_id   INTEGER NOT NULL REFERENCES curso(id) ON DELETE RESTRICT,
+    status     TEXT    NOT NULL DEFAULT 'ATIVA'
+               CHECK (status IN ('ATIVA', 'TRANCADA', 'FORMADA', 'CANCELADA'))
+);
+
+CREATE TABLE IF NOT EXISTS sala (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo      TEXT    NOT NULL UNIQUE,
+    capacidade  INTEGER NOT NULL CHECK (capacidade BETWEEN 10 AND 200),
+    tipo        TEXT    NOT NULL CHECK (tipo IN ('COMUM', 'LABORATORIO'))
+);
+
+CREATE TABLE IF NOT EXISTS alocacao (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    disciplina_id  INTEGER NOT NULL REFERENCES disciplina(id) ON DELETE CASCADE,
+    sala_id        INTEGER NOT NULL REFERENCES sala(id) ON DELETE RESTRICT,
+    dia            TEXT    NOT NULL CHECK (dia IN ('SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB')),
+    turno          TEXT    NOT NULL CHECK (turno IN ('MANHA', 'TARDE', 'NOITE')),
+    UNIQUE (sala_id, dia, turno)
+);
+
+CREATE TABLE IF NOT EXISTS despesa (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    departamento_id  INTEGER NOT NULL REFERENCES departamento(id) ON DELETE RESTRICT,
+    descricao        TEXT    NOT NULL,
+    valor            REAL    NOT NULL CHECK (valor > 0),
+    data             TEXT    NOT NULL
+);`;
+
+const DIAS = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
+const TURNOS = ["MANHA", "TARDE", "NOITE"];
+const entre = (a, b) => v => Number.isFinite(v) && v >= a && v <= b;
+
+const ESQUEMA = {
+  departamento: { cols: ["codigo", "nome", "orcamento_anual"], unique: [["codigo"]], fk: {},
+    check: { codigo: v => typeof v === "string" && v.length >= 3 && v.length <= 6, orcamento_anual: v => Number.isFinite(v) && v >= 0 } },
+  curso: { cols: ["codigo", "nome", "duracao_semestres", "departamento_id"], unique: [["codigo"]],
+    fk: { departamento_id: ["departamento", "RESTRICT"] }, check: { duracao_semestres: entre(1, 12) } },
+  disciplina: { cols: ["codigo", "nome", "carga_horaria", "vagas", "exige_laboratorio", "curso_id"], unique: [["codigo"]],
+    fk: { curso_id: ["curso", "RESTRICT"] },
+    check: { carga_horaria: entre(20, 120), vagas: entre(1, 200), exige_laboratorio: v => v === 0 || v === 1 } },
+  aluno: { cols: ["matricula", "nome", "email", "idade", "curso_id", "status"], unique: [["matricula"], ["email"]],
+    fk: { curso_id: ["curso", "RESTRICT"] },
+    check: { idade: entre(16, 100), status: v => ["ATIVA", "TRANCADA", "FORMADA", "CANCELADA"].includes(v) } },
+  sala: { cols: ["codigo", "capacidade", "tipo"], unique: [["codigo"]], fk: {},
+    check: { capacidade: entre(10, 200), tipo: v => v === "COMUM" || v === "LABORATORIO" } },
+  alocacao: { cols: ["disciplina_id", "sala_id", "dia", "turno"], unique: [["sala_id", "dia", "turno"]],
+    fk: { disciplina_id: ["disciplina", "CASCADE"], sala_id: ["sala", "RESTRICT"] },
+    check: { dia: v => DIAS.includes(v), turno: v => TURNOS.includes(v) } },
+  despesa: { cols: ["departamento_id", "descricao", "valor", "data"], unique: [], fk: { departamento_id: ["departamento", "RESTRICT"] },
+    check: { valor: v => Number.isFinite(v) && v > 0 } }
+};
+const ORDEM_TABELAS = Object.keys(ESQUEMA);
+
+class Banco {
+  constructor(opcoes) {
+    opcoes = opcoes || {};
+    this.registrar = !!opcoes.log;
+    this.log = [];
+    this.limpar();
+  }
+  limpar() {
+    this.t = {}; this.seq = {};
+    ORDEM_TABELAS.forEach(n => { this.t[n] = []; this.seq[n] = 0; });
+  }
+  sql(texto, params, erro) {
+    if (!this.registrar) return;
+    const hora = new Date().toLocaleTimeString("pt-BR");
+    this.log.push({ hora, texto, params: params || [], erro: erro || null });
+    if (this.log.length > 400) this.log.shift();
+  }
+  falhar(codigo, sqliteMsg, texto, params) {
+    this.sql(texto, params, sqliteMsg);
+    const msgs = {
+      REGISTRO_DUPLICADO: "Já existe um registro com este valor único.",
+      VINCULO_EXISTENTE: "Operação viola um vínculo entre tabelas (registro em uso ou referência inexistente).",
+      VALOR_FORA_DO_DOMINIO: "Valor fora do domínio permitido pelo banco."
+    };
+    throw new ErroSGA(codigo, msgs[codigo] + " [" + sqliteMsg + "]", "banco");
+  }
+  inserir(tab, obj) {
+    const e = ESQUEMA[tab];
+    const linha = {};
+    e.cols.forEach(c => { linha[c] = obj[c]; });
+    if (tab === "disciplina" && linha.exige_laboratorio === undefined) linha.exige_laboratorio = 0;
+    if (tab === "aluno" && linha.status === undefined) linha.status = "ATIVA";
+    const texto = "INSERT INTO " + tab + " (" + e.cols.join(", ") + ") VALUES (" + e.cols.map(() => "?").join(", ") + ")";
+    const params = e.cols.map(c => linha[c]);
+    for (const c of e.cols) {
+      if (linha[c] === null || linha[c] === undefined || (typeof linha[c] === "number" && Number.isNaN(linha[c])))
+        this.falhar("VALOR_FORA_DO_DOMINIO", "NOT NULL constraint failed: " + tab + "." + c, texto, params);
+    }
+    for (const c in e.check) {
+      if (!e.check[c](linha[c])) this.falhar("VALOR_FORA_DO_DOMINIO", "CHECK constraint failed: " + c, texto, params);
+    }
+    for (const u of e.unique) {
+      if (this.t[tab].some(r => u.every(c => r[c] === linha[c])))
+        this.falhar("REGISTRO_DUPLICADO", "UNIQUE constraint failed: " + u.map(c => tab + "." + c).join(", "), texto, params);
+    }
+    for (const c in e.fk) {
+      const alvo = e.fk[c][0];
+      if (!this.t[alvo].some(r => r.id === linha[c]))
+        this.falhar("VINCULO_EXISTENTE", "FOREIGN KEY constraint failed", texto, params);
+    }
+    linha.id = ++this.seq[tab];
+    this.t[tab].push(linha);
+    this.sql(texto, params);
+    return Object.assign({}, linha);
+  }
+  atualizar(tab, id, campos) {
+    const nomes = Object.keys(campos);
+    const texto = "UPDATE " + tab + " SET " + nomes.map(c => c + " = ?").join(", ") + " WHERE id = ?";
+    const params = nomes.map(c => campos[c]).concat([id]);
+    const r = this.t[tab].find(x => x.id === id);
+    if (!r) { this.sql(texto, params); return 0; }
+    const e = ESQUEMA[tab];
+    for (const c of nomes) if (e.check[c] && !e.check[c](campos[c]))
+      this.falhar("VALOR_FORA_DO_DOMINIO", "CHECK constraint failed: " + c, texto, params);
+    Object.assign(r, campos);
+    this.sql(texto, params);
+    return 1;
+  }
+  excluir(tab, id) {
+    const texto = "DELETE FROM " + tab + " WHERE id = ?";
+    for (const outra of ORDEM_TABELAS) {
+      const fk = ESQUEMA[outra].fk;
+      for (const c in fk) {
+        if (fk[c][0] !== tab) continue;
+        const dependentes = this.t[outra].filter(r => r[c] === id);
+        if (!dependentes.length) continue;
+        if (fk[c][1] === "RESTRICT") this.falhar("VINCULO_EXISTENTE", "FOREIGN KEY constraint failed", texto, [id]);
+      }
+    }
+    for (const outra of ORDEM_TABELAS) {
+      const fk = ESQUEMA[outra].fk;
+      for (const c in fk) if (fk[c][0] === tab && fk[c][1] === "CASCADE") this.t[outra] = this.t[outra].filter(r => r[c] !== id);
+    }
+    const antes = this.t[tab].length;
+    this.t[tab] = this.t[tab].filter(r => r.id !== id);
+    this.sql(texto, [id]);
+    return antes - this.t[tab].length;
+  }
+  todos(tab) { return this.t[tab].map(r => Object.assign({}, r)); }
+  porId(tab, id) { const r = this.t[tab].find(x => x.id === id); return r ? Object.assign({}, r) : null; }
+  onde(tab, pred) { return this.t[tab].filter(pred).map(r => Object.assign({}, r)); }
+  contar(tab) { return this.t[tab].length; }
+  exportar() { return JSON.stringify({ t: this.t, seq: this.seq }); }
+  importar(json) { const o = JSON.parse(json); this.t = o.t; this.seq = o.seq; ORDEM_TABELAS.forEach(n => { this.t[n] = this.t[n] || []; this.seq[n] = this.seq[n] || 0; }); }
+}
+
+/* ---------- repositórios (consultas com parâmetros, como o PreparedStatement) ---------- */
+function totalExecutado(db, depId) {
+  db.sql("SELECT COALESCE(SUM(valor), 0) FROM despesa WHERE departamento_id = ?", [depId]);
+  return db.t.despesa.filter(d => d.departamento_id === depId).reduce((s, d) => s + d.valor, 0);
+}
+function buscarAlunoPorNome(db, trecho) {
+  db.sql("SELECT * FROM aluno WHERE nome LIKE ? ORDER BY nome", ["%" + trecho + "%"]);
+  return db.onde("aluno", a => a.nome.includes(trecho));
+}
+/** AgendaSalas implementada sobre o banco (AlocacaoRepository). */
+function agendaDoBanco(db) {
+  return {
+    salaOcupada(salaId, dia, turno) {
+      db.sql("SELECT COUNT(*) FROM alocacao WHERE sala_id = ? AND dia = ? AND turno = ?", [salaId, dia, turno]);
+      return db.t.alocacao.some(a => a.sala_id === salaId && a.dia === dia && a.turno === turno);
+    },
+    salvar(a) { return db.inserir("alocacao", a); }
+  };
+}
+
+/* =====================================================================
+   SERVIÇOS (pacote br.edu.sga.servico) — dependências injetadas em ctx
+   ctx = { db, relogio: () => Date, notificador: { enviar(dest, assunto, msg) } }
+   ===================================================================== */
+const EMAIL_DIRETORIA = "diretoria@univale.edu.br";
+const dataISO = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const relogioFixo = iso => () => { const [a, m, d] = iso.split("-").map(Number); return new Date(a, m - 1, d, 12, 0, 0); };
+
+function criarServicos(ctx) {
+  const db = ctx.db;
+  const depOuErro = (id, msg) => {
+    const d = db.porId("departamento", id);
+    if (!d) throw new ErroSGA("DEPARTAMENTO_INEXISTENTE", msg || "Departamento não encontrado.");
+    return d;
+  };
+  return {
+    criarDepartamento(codigo, nome, orcamento) {
+      R.validarCodigoDepartamento(codigo);
+      R.validarNomeObrigatorio(nome);
+      R.validarOrcamentoAnual(orcamento);
+      return db.inserir("departamento", { codigo, nome: nome.trim(), orcamento_anual: orcamento });
+    },
+    criarCurso(codigo, nome, duracao, depId) {
+      R.validarCodigo(codigo);
+      R.validarNomeObrigatorio(nome);
+      R.validarDuracaoCurso(duracao);
+      depOuErro(depId, "Selecione um departamento cadastrado.");
+      return db.inserir("curso", { codigo, nome: nome.trim(), duracao_semestres: duracao, departamento_id: depId });
+    },
+    criarDisciplina(codigo, nome, ch, vagas, lab, cursoId) {
+      R.validarCodigo(codigo);
+      R.validarNomeObrigatorio(nome);
+      R.validarCargaHoraria(ch);
+      R.validarVagas(vagas);
+      if (!db.porId("curso", cursoId)) throw new ErroSGA("CURSO_INEXISTENTE", "Selecione um curso cadastrado.");
+      return db.inserir("disciplina", { codigo, nome: nome.trim(), carga_horaria: ch, vagas, exige_laboratorio: lab ? 1 : 0, curso_id: cursoId });
+    },
+    criarSala(codigo, capacidade, tipo) {
+      R.validarCodigo(codigo);
+      R.validarCapacidadeSala(capacidade);
+      if (!tipo) throw new ErroSGA("TIPO_OBRIGATORIO", "Informe se a sala é COMUM ou LABORATORIO.");
+      return db.inserir("sala", { codigo, capacidade, tipo });
+    },
+    /* MatriculaService */
+    cadastrarAluno(nome, email, idadeDigitada, cursoId) {
+      R.validarNome(nome);
+      R.validarEmail(email);
+      const idade = R.converterIdade(idadeDigitada);
+      R.validarIdade(idade);
+      if (!db.porId("curso", cursoId)) throw new ErroSGA("CURSO_INEXISTENTE", "Selecione um curso cadastrado.");
+      db.sql("SELECT COALESCE(MAX(id), 0) + 1 FROM aluno", []);
+      const seq = db.seq.aluno + 1;
+      const matricula = String(ctx.relogio().getFullYear()) + String(seq).padStart(4, "0");
+      return db.inserir("aluno", { matricula, nome: nome.trim(), email: email.trim().toLowerCase(), idade, curso_id: cursoId, status: "ATIVA" });
+    },
+    alterarStatus(alunoId, evento) {
+      const a = db.porId("aluno", alunoId);
+      if (!a) throw new ErroSGA("ALUNO_INEXISTENTE", "Aluno não encontrado.");
+      const novo = R.aplicar(a.status, evento);
+      db.atualizar("aluno", alunoId, { status: novo });
+      return Object.assign(a, { status: novo });
+    },
+    /* AlocacaoService */
+    alocar(agenda, disc, sala, dia, turno) {
+      const livre = !agenda.salaOcupada(sala.id, dia, turno);
+      const r = R.avaliar(livre, sala.capacidade, disc.vagas, !!disc.exige_laboratorio, sala.tipo);
+      if (r === "ALOCADA") agenda.salvar({ disciplina_id: disc.id, sala_id: sala.id, dia, turno });
+      return r;
+    },
+    /* OrcamentoService */
+    registrarDespesa(depId, descricao, valor) {
+      const dep = depOuErro(depId);
+      if (vazio(descricao)) throw new ErroSGA("DESCRICAO_OBRIGATORIA", "Descreva a despesa.");
+      const exec = totalExecutado(db, depId);
+      R.validarDespesa(dep.orcamento_anual, exec, valor);
+      const apos = exec + valor;
+      const pct = R.percentualExecutado(dep.orcamento_anual, apos);
+      const exigeDiretoria = R.exigeAprovacaoDiretoria(valor, pct);
+      const salva = db.inserir("despesa", { departamento_id: depId, descricao: descricao.trim(), valor, data: dataISO(ctx.relogio()) });
+      const antes = R.situacao(dep.orcamento_anual, exec);
+      const depois = R.situacao(dep.orcamento_anual, apos);
+      if (depois !== antes) {
+        ctx.notificador.enviar(EMAIL_DIRETORIA, "Orçamento " + dep.codigo + " mudou para " + depois,
+          "Executado: " + pct.toFixed(2).replace(".", ",") + "% do orçamento anual.");
+      }
+      return { despesa: salva, situacao: depois, percentual: pct, exigeDiretoria };
+    },
+    consultarSituacao(depId) {
+      const dep = depOuErro(depId);
+      return R.situacao(dep.orcamento_anual, totalExecutado(db, depId));
+    },
+    alterarOrcamento(depId, novo) {
+      depOuErro(depId);
+      R.validarOrcamentoAnual(novo);
+      if (novo < totalExecutado(db, depId))
+        throw new ErroSGA("ORCAMENTO_ABAIXO_EXECUTADO", "O novo orçamento é menor que o valor já executado pelo departamento.");
+      db.atualizar("departamento", depId, { orcamento_anual: novo });
+    }
+  };
+}
+
+/* ---------- dados de exemplo (sempre gravados com o código correto) ---------- */
+function povoar(db, notificador) {
+  return comDefeitos({}, () => {
+    const s = criarServicos({ db, relogio: relogioFixo("2026-02-02"), notificador: notificador || { enviar() {} } });
+    const eng = s.criarDepartamento("ENG", "Engenharias", 100000);
+    const comp = s.criarDepartamento("COMP", "Computação", 80000);
+    const adm = s.criarDepartamento("ADM", "Administração", 50000);
+    const es = s.criarCurso("ES", "Engenharia de Software", 8, comp.id);
+    const em = s.criarCurso("EM", "Engenharia Mecânica", 10, eng.id);
+    const ad = s.criarCurso("ADM", "Administração", 8, adm.id);
+    const gqs = s.criarDisciplina("GQS", "Garantia da Qualidade de Software", 80, 40, false, es.id);
+    const bd1 = s.criarDisciplina("BD1", "Banco de Dados I", 80, 30, true, es.id);
+    const termo = s.criarDisciplina("TERMO", "Termodinâmica", 80, 45, false, em.id);
+    const calc = s.criarDisciplina("CALC1", "Cálculo I", 80, 60, false, em.id);
+    const cont = s.criarDisciplina("CONT", "Contabilidade Geral", 60, 50, false, ad.id);
+    const s101 = s.criarSala("S-101", 40, "COMUM");
+    const s102 = s.criarSala("S-102", 60, "COMUM");
+    const lab1 = s.criarSala("LAB-1", 30, "LABORATORIO");
+    s.criarSala("LAB-2", 25, "LABORATORIO");
+    const aud = s.criarSala("AUD-1", 120, "COMUM");
+    const alunos = [
+      ["Ana Souza", "ana.souza@aluno.univale.edu.br", "19", es.id],
+      ["Bruno Lima", "bruno.lima@aluno.univale.edu.br", "22", es.id],
+      ["Carla Mendes", "carla.mendes@aluno.univale.edu.br", "20", em.id],
+      ["Diego Rocha", "diego.rocha@aluno.univale.edu.br", "27", em.id],
+      ["Elisa Tavares", "elisa.tavares@aluno.univale.edu.br", "18", ad.id],
+      ["Fábio Nunes", "fabio.nunes@aluno.univale.edu.br", "31", ad.id]
+    ].map(a => s.cadastrarAluno(a[0], a[1], a[2], a[3]));
+    s.alterarStatus(alunos[1].id, "TRANCAR");
+    s.alterarStatus(alunos[3].id, "CONCLUIR");
+    const ag = agendaDoBanco(db);
+    s.alocar(ag, gqs, s101, "SEG", "NOITE");
+    s.alocar(ag, gqs, s101, "QUI", "NOITE");
+    s.alocar(ag, bd1, lab1, "QUA", "NOITE");
+    s.alocar(ag, termo, s102, "SEG", "NOITE");
+    s.alocar(ag, calc, s102, "TER", "MANHA");
+    s.alocar(ag, cont, aud, "QUI", "NOITE");
+    s.registrarDespesa(comp.id, "Licenças de software e servidores", 65000);
+    s.registrarDespesa(eng.id, "Equipamentos do laboratório de fluidos", 30000);
+  });
+}
+/* =====================================================================
+   SUÍTE — os mesmos 102 casos das classes JUnit, com os mesmos IDs
+   ===================================================================== */
+class FalhaAssert extends Error {
+  constructor(esperado, obtido, msg) {
+    super(msg || ("expected: <" + esperado + "> but was: <" + obtido + ">"));
+    this.esperado = String(esperado); this.obtido = String(obtido);
+  }
+}
+const A = {
+  igual(esp, obt, rotulo) {
+    if (esp !== obt) throw new FalhaAssert(esp, obt, (rotulo ? rotulo + " ==> " : "") + "expected: <" + esp + "> but was: <" + obt + ">");
+    return obt;
+  },
+  verdadeiro(v, rotulo) { return A.igual(true, v, rotulo); },
+  falso(v, rotulo) { return A.igual(false, v, rotulo); },
+  lanca(codigo, fn) {
+    let erro = null;
+    try { fn(); } catch (e) { erro = e; }
+    if (!erro) throw new FalhaAssert("exceção " + codigo, "nenhuma exceção", "Expected " + codigo + " to be thrown, but nothing was thrown.");
+    if (!(erro instanceof ErroSGA)) throw erro;
+    A.igual(codigo, erro.codigo, "código da exceção");
+    return erro;
+  },
+  naoLanca(fn) {
+    try { return fn(); } catch (e) {
+      if (e instanceof ErroSGA) throw new FalhaAssert("sem exceção", e.codigo, "Unexpected exception thrown: " + e.codigo + " — " + e.message);
+      throw e;
+    }
+  }
+};
+
+const TESTES = [];
+function caso(id, classe, tecnica, req, desc, entrada, esperado, fn) {
+  TESTES.push({ id, classe, tecnica, req, desc, entrada, esperado, fn });
+}
+const PK = "caixapreta.", BK = "caixabranca.";
+
+/* ---------- CT-01..09 Partição de equivalência ---------- */
+{
+  const C = PK + "ParticaoEquivalenciaTest", T = "Partição de equivalência";
+  const idadeDigitada = t => { R.validarIdade(R.converterIdade(t)); };
+  caso("CT-01", C, T, "RN-01", "CE-1 idade abaixo de 16", 'idade = "12"', "IDADE_INVALIDA", () => A.lanca("IDADE_INVALIDA", () => idadeDigitada("12")).codigo);
+  caso("CT-02", C, T, "RN-01", "CE-2 idade válida", 'idade = "35"', "aceita", () => { A.naoLanca(() => idadeDigitada("35")); return "aceita"; });
+  caso("CT-03", C, T, "RN-01", "CE-3 idade acima de 100", 'idade = "130"', "IDADE_INVALIDA", () => A.lanca("IDADE_INVALIDA", () => idadeDigitada("130")).codigo);
+  caso("CT-04", C, T, "RN-01", "CE-4 campo vazio", 'idade = ""', "IDADE_OBRIGATORIA", () => A.lanca("IDADE_OBRIGATORIA", () => idadeDigitada("")).codigo);
+  caso("CT-05", C, T, "RN-01", "CE-5 não numérico", 'idade = "vinte"', "IDADE_NAO_NUMERICA", () => A.lanca("IDADE_NAO_NUMERICA", () => idadeDigitada("vinte")).codigo);
+  caso("CT-06", C, T, "RN-02", "CE-6 e-mail válido", "ana.souza@aluno.univale.edu.br", "aceita", () => { A.naoLanca(() => R.validarEmail("ana.souza@aluno.univale.edu.br")); return "aceita"; });
+  caso("CT-07", C, T, "RN-02", "CE-7 sem arroba", "ana.univale.edu.br", "EMAIL_INVALIDO", () => A.lanca("EMAIL_INVALIDO", () => R.validarEmail("ana.univale.edu.br")).codigo);
+  caso("CT-08", C, T, "RN-02", "CE-8 domínio sem ponto", "ana@univale", "EMAIL_INVALIDO", () => A.lanca("EMAIL_INVALIDO", () => R.validarEmail("ana@univale")).codigo);
+  caso("CT-09", C, T, "RN-02", "CE-9 e-mail vazio", '""', "EMAIL_OBRIGATORIO", () => A.lanca("EMAIL_OBRIGATORIO", () => R.validarEmail("")).codigo);
+}
+
+/* ---------- CT-10..27 Valor limite ---------- */
+{
+  const C = PK + "ValorLimiteTest", T = "Análise de valor limite";
+  [["CT-10", 15, false], ["CT-11", 16, true], ["CT-12", 17, true], ["CT-13", 99, true], ["CT-14", 100, true], ["CT-15", 101, false]]
+    .forEach(([id, idade, ok]) => caso(id, C, T, "RN-01", "idade " + idade, "idade = " + idade, ok ? "aceita" : "IDADE_INVALIDA",
+      () => ok ? (A.naoLanca(() => R.validarIdade(idade)), "aceita") : A.lanca("IDADE_INVALIDA", () => R.validarIdade(idade)).codigo));
+  [["CT-16", 39, "BLOQUEIO_CAPACIDADE"], ["CT-17", 40, "ALOCADA"], ["CT-18", 41, "ALOCADA"]]
+    .forEach(([id, cap, esp]) => caso(id, C, T, "RN-05", "sala com " + cap + " lugares, disciplina com 40 vagas",
+      "livre, cap=" + cap + ", vagas=40, comum", esp, () => A.igual(esp, R.avaliar(true, cap, 40, false, "COMUM"))));
+  [["CT-19", 79990, "NORMAL"], ["CT-20", 80000, "ALERTA"], ["CT-21", 80010, "ALERTA"], ["CT-22", 99990, "ALERTA"], ["CT-23", 100000, "ESGOTADO"]]
+    .forEach(([id, ex, esp]) => caso(id, C, T, "RN-03", "orçado 100.000, executado " + ex.toLocaleString("pt-BR"),
+      "orçado 100000, executado " + ex, esp, () => A.igual(esp, R.situacao(100000, ex))));
+  [["CT-24", 100.00, ""], ["CT-25", 100.01, "SALDO_INSUFICIENTE"], ["CT-26", 0.00, "VALOR_INVALIDO"], ["CT-27", 0.01, ""]]
+    .forEach(([id, v, cod]) => caso(id, C, T, "RN-04", "orçado 1.000, executado 900, despesa " + v.toFixed(2),
+      "orçado 1000, exec 900, valor " + v.toFixed(2), cod || "aceita",
+      () => cod ? A.lanca(cod, () => R.validarDespesa(1000, 900, v)).codigo : (A.naoLanca(() => R.validarDespesa(1000, 900, v)), "aceita")));
+}
+
+/* ---------- CT-30..35 Tabela de decisão ---------- */
+{
+  const C = PK + "TabelaDecisaoAlocacaoTest", T = "Tabela de decisão";
+  [["CT-30", "R1", true, 30, 30, true, "LABORATORIO", "ALOCADA"],
+   ["CT-31", "R2", true, 30, 30, true, "COMUM", "BLOQUEIO_TIPO_SALA"],
+   ["CT-32", "R3-R4", true, 20, 30, false, "COMUM", "BLOQUEIO_CAPACIDADE"],
+   ["CT-33", "R5-R8", false, 30, 30, false, "COMUM", "BLOQUEIO_SALA_OCUPADA"],
+   ["CT-34", "R1*", true, 30, 30, false, "LABORATORIO", "ALOCADA"],
+   ["CT-35", "R8", false, 20, 30, true, "COMUM", "BLOQUEIO_SALA_OCUPADA"]]
+    .forEach(([id, regra, livre, cap, vagas, lab, tipo, esp]) => caso(id, C, T, "RN-05", "regra " + regra,
+      "livre=" + (livre ? "S" : "N") + ", cap=" + cap + ", vagas=" + vagas + ", exigeLab=" + (lab ? "S" : "N") + ", sala=" + tipo, esp,
+      () => A.igual(esp, R.avaliar(livre, cap, vagas, lab, tipo))));
+}
+
+/* ---------- CT-40..48 Transição de estados ---------- */
+{
+  const C = PK + "TransicaoEstadosMatriculaTest", T = "Transição de estados";
+  [["CT-40", "ATIVA", "TRANCAR", "TRANCADA"], ["CT-41", "TRANCADA", "REATIVAR", "ATIVA"], ["CT-42", "ATIVA", "CONCLUIR", "FORMADA"],
+   ["CT-43", "ATIVA", "CANCELAR", "CANCELADA"], ["CT-44", "TRANCADA", "CANCELAR", "CANCELADA"]]
+    .forEach(([id, de, ev, para]) => caso(id, C, T, "RN-06", de + " --" + ev + "--> " + para, de + " + " + ev, para, () => A.igual(para, R.aplicar(de, ev))));
+  [["CT-45", "FORMADA", "CANCELAR"], ["CT-46", "CANCELADA", "REATIVAR"], ["CT-47", "TRANCADA", "CONCLUIR"], ["CT-48", "ATIVA", "REATIVAR"]]
+    .forEach(([id, de, ev]) => caso(id, C, T, "RN-06", de + " --" + ev + "--> proibida", de + " + " + ev, "TRANSICAO_INVALIDA",
+      () => A.lanca("TRANSICAO_INVALIDA", () => R.aplicar(de, ev)).codigo));
+}
+
+/* ---------- CT-50..82 Validações de cadastro ---------- */
+{
+  const C = PK + "ValidacoesCadastroTest", T = "Partição + valor limite";
+  const grupo = (lista, req, rot, cod, fn) => lista.forEach(([id, v, ok]) => caso(id, C, T, req, rot(v), String(v === "" ? '""' : v), ok ? "aceita" : cod,
+    () => ok ? (A.naoLanca(() => fn(v)), "aceita") : A.lanca(cod, () => fn(v)).codigo));
+  grupo([["CT-50", "ENG", true], ["CT-51", "EN", false], ["CT-52", "ENGENH", true], ["CT-53", "ENGENHA", false], ["CT-54", "eng", false], ["CT-55", "EN1", false]],
+    "RF-01", v => 'código de departamento "' + v + '"', "CODIGO_INVALIDO", R.validarCodigoDepartamento);
+  grupo([["CT-56", 0, false], ["CT-57", 20, true], ["CT-58", 50, false], ["CT-59", 120, true], ["CT-60", 140, false]],
+    "RN-11", v => "carga horária " + v + " h", "CARGA_HORARIA_INVALIDA", R.validarCargaHoraria);
+  grupo([["CT-61", 9, false], ["CT-62", 10, true], ["CT-63", 200, true], ["CT-64", 201, false]],
+    "RN-11", v => "capacidade da sala " + v, "CAPACIDADE_INVALIDA", R.validarCapacidadeSala);
+  grupo([["CT-65", 0, false], ["CT-66", 1, true], ["CT-67", 200, true], ["CT-68", 201, false]],
+    "RN-11", v => "vagas " + v, "VAGAS_INVALIDAS", R.validarVagas);
+  grupo([["CT-69", 0, false], ["CT-70", 1, true], ["CT-71", 12, true], ["CT-72", 13, false]],
+    "RF-02", v => "duração do curso " + v + " semestres", "DURACAO_INVALIDA", R.validarDuracaoCurso);
+  grupo([["CT-73", -0.01, false], ["CT-74", 0, true]],
+    "RF-01", v => "orçamento anual " + v.toFixed(2), "ORCAMENTO_NEGATIVO", R.validarOrcamentoAnual);
+  grupo([["CT-75", "GQS-01", true], ["CT-76", "g", false], ["CT-77", "", false]],
+    "RF-03", v => 'código geral "' + v + '"', "CODIGO_INVALIDO", R.validarCodigo);
+  [["CT-78", 2, false], ["CT-79", 3, true], ["CT-80", 100, true], ["CT-81", 101, false]].forEach(([id, n, ok]) =>
+    caso(id, C, T, "RF-04", "nome do aluno com " + n + " caracteres", '"A" × ' + n, ok ? "aceita" : "NOME_TAMANHO",
+      () => ok ? (A.naoLanca(() => R.validarNome("A".repeat(n))), "aceita") : A.lanca("NOME_TAMANHO", () => R.validarNome("A".repeat(n))).codigo));
+  caso("CT-82", C, "Adivinhação de erro", "RF-01..04", "campos obrigatórios nulos ou em branco", "null, \"   \" em 8 campos", "8 rejeições", () => {
+    A.lanca("NOME_OBRIGATORIO", () => R.validarNome("   "));
+    A.lanca("NOME_OBRIGATORIO", () => R.validarNome(null));
+    A.lanca("NOME_OBRIGATORIO", () => R.validarNomeObrigatorio(null));
+    A.lanca("NOME_OBRIGATORIO", () => R.validarNomeObrigatorio(" "));
+    A.lanca("CODIGO_INVALIDO", () => R.validarCodigoDepartamento(null));
+    A.lanca("CODIGO_INVALIDO", () => R.validarCodigo(null));
+    A.lanca("EMAIL_OBRIGATORIO", () => R.validarEmail(null));
+    A.lanca("IDADE_OBRIGATORIA", () => R.converterIdade(null));
+    return "8 rejeições";
+  });
+}
+
+/* ---------- CB-01..13 Caixa-branca ---------- */
+{
+  const C = BK + "CoberturaCondicoesTest", T = "Cobertura de condições";
+  [["CB-01", 15000, 95, true, "A=V, B=V"], ["CB-02", 500, 10, false, "A=F, B=F"], ["CB-03", 15000, 10, true, "A=V, B=F — só A decide"], ["CB-04", 500, 95, true, "A=F, B=V — só B decide"]]
+    .forEach(([id, v, p, esp, rot]) => caso(id, C, T, "RN-08", "valor " + v.toLocaleString("pt-BR") + " e " + p + "% (" + rot + ")",
+      "valor=" + v + ", pct=" + p, esp ? "exige" : "não exige", () => A.igual(esp, R.exigeAprovacaoDiretoria(v, p)) ? "exige" : "não exige"));
+  const C2 = BK + "CaminhosBasicosTest", T2 = "Caminhos básicos (McCabe)";
+  [["CB-05", "caminho 1: sala ocupada", false, 50, 30, false, "COMUM", "BLOQUEIO_SALA_OCUPADA"],
+   ["CB-06", "caminho 2: capacidade", true, 20, 30, false, "COMUM", "BLOQUEIO_CAPACIDADE"],
+   ["CB-07", "caminho 3: tipo de sala", true, 50, 30, true, "COMUM", "BLOQUEIO_TIPO_SALA"],
+   ["CB-08", "caminho 4: todas as decisões falsas", true, 50, 30, false, "COMUM", "ALOCADA"]]
+    .forEach(([id, rot, livre, cap, vagas, lab, tipo, esp]) => caso(id, C2, T2, "RN-05", "avaliar() " + rot,
+      "livre=" + (livre ? "S" : "N") + ", cap=" + cap + ", vagas=" + vagas + ", exigeLab=" + (lab ? "S" : "N"), esp,
+      () => A.igual(esp, R.avaliar(livre, cap, vagas, lab, tipo))));
+  [["CB-09", "1º if verdadeiro", 1000, 1000, "ESGOTADO"], ["CB-10", "2º if verdadeiro", 1000, 850, "ALERTA"], ["CB-11", "ambos falsos", 1000, 100, "NORMAL"]]
+    .forEach(([id, rot, o, e, esp]) => caso(id, C2, T2, "RN-03", "situacao(): " + rot, "orçado " + o + ", executado " + e, esp, () => A.igual(esp, R.situacao(o, e))));
+  caso("CB-12", C2, T2, "RN-03", "percentualExecutado(): caminho de exceção", "orçado 0, executado 10", "ORCAMENTO_ZERADO",
+    () => A.lanca("ORCAMENTO_ZERADO", () => R.situacao(0, 10)).codigo);
+  caso("CB-13", BK + "ArmadilhaCoberturaTest", "Antiexemplo", "RN-05", "executa todos os caminhos, não verifica nada (NÃO FAÇA ISSO)",
+    "4 chamadas a avaliar()", "(nenhum assert)", () => {
+      R.avaliar(false, 40, 40, false, "COMUM");
+      R.avaliar(true, 39, 40, false, "COMUM");
+      R.avaliar(true, 40, 40, true, "COMUM");
+      R.avaliar(true, 40, 40, false, "COMUM");
+      return "(nenhum assert)";
+    });
+}
+
+/* ---------- CI-01..08 Integração (fixture: banco novo a cada teste) ---------- */
+function fixtureIntegracao() {
+  const db = new Banco();
+  const s = criarServicos({ db, relogio: relogioFixo("2026-09-17"), notificador: { enviar() {} } });
+  const comp = s.criarDepartamento("COMP", "Computação", 80000);
+  const es = s.criarCurso("ES", "Engenharia de Software", 8, comp.id);
+  const gqs = s.criarDisciplina("GQS", "Garantia da Qualidade de Software", 80, 40, false, es.id);
+  const s101 = s.criarSala("S-101", 40, "COMUM");
+  return { db, s, comp, es, gqs, s101 };
+}
+{
+  const C = "integracao.BancoDeDadosIntegracaoTest", T = "Integração (banco)";
+  caso("CI-01", C, T, "RF-01", "código de departamento duplicado é barrado pelo UNIQUE", 'criar "COMP" duas vezes', "REGISTRO_DUPLICADO", () => {
+    const f = fixtureIntegracao();
+    return A.lanca("REGISTRO_DUPLICADO", () => f.s.criarDepartamento("COMP", "Outro nome", 1000)).codigo;
+  });
+  caso("CI-02", C, T, "RN-10", "excluir departamento com curso vinculado é barrado pela FOREIGN KEY", "DELETE departamento COMP", "VINCULO_EXISTENTE", () => {
+    const f = fixtureIntegracao();
+    const e = A.lanca("VINCULO_EXISTENTE", () => f.db.excluir("departamento", f.comp.id));
+    A.igual(1, f.db.contar("departamento"), "departamentos após a tentativa");
+    return e.codigo;
+  });
+  caso("CI-03", C, T, "RNF-01", "defesa em profundidade: banco rejeita a mesma sala/dia/turno sem passar pela regra", "INSERT alocacao repetido", "REGISTRO_DUPLICADO", () => {
+    const f = fixtureIntegracao();
+    const a = { disciplina_id: f.gqs.id, sala_id: f.s101.id, dia: "SEG", turno: "NOITE" };
+    f.db.inserir("alocacao", a);
+    return A.lanca("REGISTRO_DUPLICADO", () => f.db.inserir("alocacao", a)).codigo;
+  });
+  caso("CI-04", C, T, "RNF-05", "texto com SQL injection é gravado literalmente", "nome = Robert'); DROP TABLE aluno;--", "gravado literal", () => {
+    const f = fixtureIntegracao();
+    const nome = "Robert'); DROP TABLE aluno;--";
+    f.db.inserir("aluno", { matricula: "20269999", nome, email: "bobby@x.com", idade: 20, curso_id: f.es.id, status: "ATIVA" });
+    A.igual(nome, buscarAlunoPorNome(f.db, "Robert")[0].nome, "nome gravado");
+    A.igual(1, f.db.contar("aluno"), "alunos na tabela");
+    return "gravado literal";
+  });
+  caso("CI-05", C, T, "RN-01", "CHECK do banco barra idade fora da faixa gravada sem validação", "INSERT aluno idade 12", "VALOR_FORA_DO_DOMINIO", () => {
+    const f = fixtureIntegracao();
+    return A.lanca("VALOR_FORA_DO_DOMINIO", () => f.db.inserir("aluno",
+      { matricula: "20260500", nome: "Menor de Idade", email: "menor@x.com", idade: 12, curso_id: f.es.id, status: "ATIVA" })).codigo;
+  });
+  caso("CI-06", C, T, "RF-08", "segunda alocação na mesma sala/dia/turno é bloqueada pela regra e não grava", "GQS em S-101 QUA/NOITE duas vezes", "ALOCADA, depois BLOQUEIO_SALA_OCUPADA", () => {
+    const f = fixtureIntegracao();
+    const ag = agendaDoBanco(f.db);
+    A.igual("ALOCADA", f.s.alocar(ag, f.gqs, f.s101, "QUA", "NOITE"), "1ª alocação");
+    A.igual("BLOQUEIO_SALA_OCUPADA", f.s.alocar(ag, f.gqs, f.s101, "QUA", "NOITE"), "2ª alocação");
+    A.igual(1, f.db.contar("alocacao"), "alocações gravadas");
+    return "ALOCADA, depois BLOQUEIO_SALA_OCUPADA";
+  });
+  caso("CI-07", C, T, "RF-04", "matrícula gerada com ano do relógio fixo + sequencial", 'Ana Souza, "ANA@Aluno.edu.br", "19"', "20260001", () => {
+    const f = fixtureIntegracao();
+    const a = f.s.cadastrarAluno("Ana Souza", "ANA@Aluno.edu.br", "19", f.es.id);
+    A.igual("ana@aluno.edu.br", a.email, "e-mail normalizado");
+    A.igual("ATIVA", a.status, "situação inicial");
+    return A.igual("20260001", a.matricula, "matrícula");
+  });
+  caso("CI-08", C, T, "RN-09", "orçamento não pode ser reduzido abaixo do já executado", "executado 50.000; novo orçamento 40.000", "ORCAMENTO_ABAIXO_EXECUTADO", () => {
+    const f = fixtureIntegracao();
+    f.s.registrarDespesa(f.comp.id, "Licenças", 50000);
+    return A.lanca("ORCAMENTO_ABAIXO_EXECUTADO", () => f.s.alterarOrcamento(f.comp.id, 40000)).codigo;
+  });
+}
+
+/* ---------- UD-01..06 Unidade com dublês ---------- */
+function criarSpy() { const spy = { chamadas: [] }; spy.enviar = (d, a, m) => spy.chamadas.push({ destinatario: d, assunto: a, mensagem: m }); return spy; }
+function fixtureDubles() {
+  const db = new Banco();
+  const depId = db.inserir("departamento", { codigo: "ENG", nome: "Engenharias", orcamento_anual: 10000 }).id;
+  const email = criarSpy();
+  const s = criarServicos({ db, relogio: relogioFixo("2026-09-17"), notificador: email });
+  return { db, depId, email, s };
+}
+{
+  const C = "unidade.DublesDeTesteTest", T = "Dublês de teste";
+  caso("UD-01", C, T + " (spy)", "RN-07", "despesa que muda NORMAL → ALERTA notifica a diretoria uma vez", "orçado 10.000; despesa 8.500", "ALERTA + 1 e-mail", () => {
+    const f = fixtureDubles();
+    const r = f.s.registrarDespesa(f.depId, "Bancadas", 8500);
+    A.igual("ALERTA", r.situacao, "situação");
+    A.igual(1, f.email.chamadas.length, "e-mails enviados");
+    A.igual(EMAIL_DIRETORIA, f.email.chamadas[0].destinatario, "destinatário");
+    A.verdadeiro(f.email.chamadas[0].assunto.includes("ALERTA"), "assunto contém ALERTA");
+    return "ALERTA + 1 e-mail";
+  });
+  caso("UD-02", C, T + " (spy)", "RN-07", "despesa que mantém NORMAL não envia e-mail", "despesa 500", "0 e-mails", () => {
+    const f = fixtureDubles();
+    f.s.registrarDespesa(f.depId, "Material de escritório", 500);
+    A.igual(0, f.email.chamadas.length, "e-mails enviados");
+    return "0 e-mails";
+  });
+  caso("UD-03", C, T + " (spy)", "RN-04", "despesa sem saldo: nada gravado e nenhum e-mail", "despesa 10.000,01", "SALDO_INSUFICIENTE", () => {
+    const f = fixtureDubles();
+    const e = A.lanca("SALDO_INSUFICIENTE", () => f.s.registrarDespesa(f.depId, "Equipamento", 10000.01));
+    A.igual(0, totalExecutado(f.db, f.depId), "executado");
+    A.igual(0, f.email.chamadas.length, "e-mails enviados");
+    return e.codigo;
+  });
+  caso("UD-04", C, T + " (stub)", "RF-05", "data da despesa vem do relógio (stub), não do relógio do sistema", "relógio fixo 2026-09-17", "2026-09-17", () => {
+    const f = fixtureDubles();
+    return A.igual("2026-09-17", f.s.registrarDespesa(f.depId, "Cabos", 100).despesa.data, "data da despesa");
+  });
+  caso("UD-05", C, T + " (fake)", "RF-08", "fake: alocação em sala livre é gravada uma única vez", "BD1 (30 vagas, lab) em LAB-1 (30)", "ALOCADA + 1 gravação", () => {
+    const gravadas = [];
+    const fake = {
+      salaOcupada: (id, d, t) => gravadas.some(a => a.sala_id === id && a.dia === d && a.turno === t),
+      salvar: a => { const c = Object.assign({ id: gravadas.length + 1 }, a); gravadas.push(c); return c; }
+    };
+    const s = criarServicos({ db: new Banco(), relogio: relogioFixo("2026-09-17"), notificador: { enviar() {} } });
+    const bd = { id: 7, codigo: "BD1", vagas: 30, exige_laboratorio: 1 };
+    const lab = { id: 3, codigo: "LAB-1", capacidade: 30, tipo: "LABORATORIO" };
+    A.igual("ALOCADA", s.alocar(fake, bd, lab, "TER", "NOITE"), "resultado");
+    A.igual(1, gravadas.length, "gravações no fake");
+    return "ALOCADA + 1 gravação";
+  });
+  caso("UD-06", C, T + " (stub)", "RN-05", "stub 'sempre ocupada': o serviço bloqueia e nunca chama salvar()", "agenda que sempre responde ocupada", "BLOQUEIO_SALA_OCUPADA, salvar() 0×", () => {
+    let chamadasSalvar = 0;
+    const stub = { salaOcupada: () => true, salvar: a => { chamadasSalvar++; return a; } };
+    const s = criarServicos({ db: new Banco(), relogio: relogioFixo("2026-09-17"), notificador: { enviar() {} } });
+    A.igual("BLOQUEIO_SALA_OCUPADA", s.alocar(stub, { id: 1, vagas: 40, exige_laboratorio: 0 }, { id: 1, capacidade: 40, tipo: "COMUM" }, "SEG", "NOITE"), "resultado");
+    A.igual(0, chamadasSalvar, "chamadas a salvar()");
+    return "BLOQUEIO_SALA_OCUPADA, salvar() 0×";
+  });
+}
+TESTES.sort((a, b) => a.id.localeCompare(b.id));
+const TESTE_POR_ID = Object.fromEntries(TESTES.map(t => [t.id, t]));
+
+/* ---------- executor ---------- */
+function executarTeste(t) {
+  const t0 = performance.now();
+  try {
+    const obtido = t.fn();
+    return { id: t.id, status: "ok", obtido: obtido === undefined ? "" : String(obtido), ms: performance.now() - t0 };
+  } catch (e) {
+    if (e instanceof FalhaAssert) return { id: t.id, status: "falha", obtido: e.obtido, esperadoAssert: e.esperado, msg: e.message, ms: performance.now() - t0 };
+    return { id: t.id, status: "erro", obtido: e && e.codigo ? e.codigo : String(e), msg: (e && e.message) || String(e), ms: performance.now() - t0 };
+  }
+}
+function executarSuite(lista) {
+  const inicio = performance.now();
+  const resultados = (lista || TESTES).map(executarTeste);
+  return { resultados, porId: Object.fromEntries(resultados.map(r => [r.id, r])), ms: performance.now() - inicio,
+    defeitos: Object.keys(DEF).filter(k => DEF[k]), quando: new Date() };
+}
+function matrizDeteccao() {
+  const linhas = {};
+  Object.keys(DEF).forEach(d => {
+    const r = comDefeitos({ [d]: true }, () => executarSuite());
+    linhas[d] = r.resultados.filter(x => x.status !== "ok").map(x => x.id);
+  });
+  return linhas;
+}
+
+/* =====================================================================
+   CAIXA-BRANCA — métodos instrumentados exibidos no visor
+   ===================================================================== */
+const METODOS = {
+  EAD: {
+    titulo: "RegraOrcamento.exigeAprovacaoDiretoria", req: "RN-08",
+    codigo: [
+      "public static boolean exigeAprovacaoDiretoria(double valor, double percentualApos) {",
+      "    if (valor > 10_000.00 || percentualApos >= 90.0) {",
+      "        return true;",
+      "    }",
+      "    return false;",
+      "}"],
+    exec: [1, 2, 3, 5], ramos: { 2: ["A", "B"] }, decs: { d1: 2 }, conds: ["A", "B"],
+    nomesCond: { A: "A: valor > 10.000", B: "B: percentual ≥ 90" },
+    casos: ["CB-01", "CB-02", "CB-03", "CB-04"], padrao: ["CB-01"],
+    defeito: "D05", mut: { linha: 2, de: "||", para: "&&" }
+  },
+  AVL: {
+    titulo: "RegraAlocacao.avaliar", req: "RN-05",
+    codigo: [
+      "public static ResultadoAlocacao avaliar(boolean salaLivre, int capacidadeSala,",
+      "        int vagasDisciplina, boolean exigeLaboratorio, TipoSala tipoSala) {",
+      "    if (!salaLivre) {",
+      "        return ResultadoAlocacao.BLOQUEIO_SALA_OCUPADA;",
+      "    }",
+      "    if (capacidadeSala < vagasDisciplina) {",
+      "        return ResultadoAlocacao.BLOQUEIO_CAPACIDADE;",
+      "    }",
+      "    if (exigeLaboratorio && tipoSala != TipoSala.LABORATORIO) {",
+      "        return ResultadoAlocacao.BLOQUEIO_TIPO_SALA;",
+      "    }",
+      "    return ResultadoAlocacao.ALOCADA;",
+      "}"],
+    exec: [1, 3, 4, 6, 7, 9, 10, 12], ramos: { 3: ["C1"], 6: ["C2"], 9: ["C3a", "C3b"] }, decs: { d1: 3, d2: 6, d3: 9 },
+    conds: ["C1", "C2", "C3a", "C3b"],
+    nomesCond: { C1: "!salaLivre", C2: "capacidade < vagas", C3a: "exigeLaboratorio", C3b: "tipo != LABORATORIO" },
+    casos: ["CB-05", "CB-06", "CB-07", "CB-08", "CT-30", "CT-17", "CB-13"], padrao: ["CB-05", "CB-06", "CB-07", "CB-08"],
+    defeito: "D01", mut: { linha: 6, de: "<", para: "<=" }
+  },
+  SIT: {
+    titulo: "RegraOrcamento.situacao", req: "RN-03",
+    codigo: [
+      "public static SituacaoOrcamento situacao(double orcado, double executado) {",
+      "    double percentual = percentualExecutado(orcado, executado);",
+      "    if (percentual >= 100.0) {",
+      "        return SituacaoOrcamento.ESGOTADO;",
+      "    }",
+      "    if (percentual >= LIMITE_ALERTA_PERCENTUAL) {",
+      "        return SituacaoOrcamento.ALERTA;",
+      "    }",
+      "    return SituacaoOrcamento.NORMAL;",
+      "}"],
+    exec: [1, 2, 3, 4, 6, 7, 9], ramos: { 3: ["C1"], 6: ["C2"] }, decs: { d1: 3, d2: 6 }, conds: ["C1", "C2"],
+    nomesCond: { C1: "percentual ≥ 100", C2: "percentual ≥ 80" },
+    casos: ["CB-09", "CB-10", "CB-11", "CB-12", "CT-20"], padrao: ["CB-09", "CB-10", "CB-11"],
+    defeito: "D02", mut: { linha: 6, de: ">=", para: ">" }
+  }
+};
+
+/** Executa um conjunto de casos coletando cobertura do método escolhido. */
+function analisarCobertura(met, ids) {
+  const M = METODOS[met];
+  COB.iniciar();
+  let resultados;
+  try { resultados = ids.map(id => executarTeste(TESTE_POR_ID[id])); }
+  finally { var cob = COB.parar(); }
+  const c = (cob && cob[met]) || { linhas: new Set(), dec: {}, cond: {} };
+  const hitL = M.exec.filter(n => c.linhas.has(n)).length;
+  let decCob = 0, decTot = 0;
+  Object.keys(M.decs).forEach(d => { decTot += 2; const x = c.dec[d] || { T: 0, F: 0 }; decCob += (x.T > 0) + (x.F > 0); });
+  let conCob = 0, conTot = 0;
+  M.conds.forEach(k => { conTot += 2; const x = c.cond[k] || { T: 0, F: 0 }; conCob += (x.T > 0) + (x.F > 0); });
+  const estadoLinha = n => {
+    if (!M.exec.includes(n)) return "";
+    if (!c.linhas.has(n)) return "miss";
+    const r = M.ramos[n];
+    if (r && r.some(k => { const x = c.cond[k] || { T: 0, F: 0 }; return !(x.T > 0 && x.F > 0); })) return "parcial";
+    return "hit";
+  };
+  // o conjunto "mata" o mutante do método? (reexecuta só com aquele defeito ligado)
+  const mutante = comDefeitos({ [M.defeito]: true }, () => ids.map(id => executarTeste(TESTE_POR_ID[id])));
+  const matadores = mutante.filter(r => r.status !== "ok").map(r => r.id);
+  return {
+    resultados, cob: c, estadoLinha, matadores,
+    linhas: { cob: hitL, tot: M.exec.length }, decisoes: { cob: decCob, tot: decTot }, condicoes: { cob: conCob, tot: conTot }
+  };
+}
+
+/** Valores (A, B) avaliados em cada caso de exigeAprovacaoDiretoria — para a tabela de MC/DC. */
+const EAD_CASOS = {
+  "CB-01": { A: true, B: true, avaliaB: false, saida: true },
+  "CB-02": { A: false, B: false, avaliaB: true, saida: false },
+  "CB-03": { A: true, B: false, avaliaB: false, saida: true },
+  "CB-04": { A: false, B: true, avaliaB: true, saida: true }
+};
+function mcdc(ids) {
+  const tem = id => ids.includes(id);
+  return { A: tem("CB-03") && tem("CB-02"), B: tem("CB-04") && tem("CB-02") };
+}
+/* =====================================================================
+   INTERFACE
+   ===================================================================== */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const esc = s => String(s === null || s === undefined ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const brl = n => Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const pctFmt = n => Number(n).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%";
+const selo = (txt, cls) => '<span class="selo ' + esc(cls || txt) + '">' + esc(txt) + "</span>";
+const num = v => (v === null || v === undefined || String(v).trim() === "") ? NaN : Number(String(v).replace(",", "."));
+const CHAVE_LS = "sga-lab-v1";
+
+/* ---------- estado da aplicação ---------- */
+let DB = new Banco({ log: true });
+let EMAILS = [];
+let ULTIMA = null;      // última execução da suíte
+let MATRIZ = null;      // matriz de detecção
+let TURNO = "NOITE";
+let METODO = "EAD";
+const SELECIONADOS = { EAD: METODOS.EAD.padrao.slice(), AVL: METODOS.AVL.padrao.slice(), SIT: METODOS.SIT.padrao.slice() };
+let ANALISE = null;
+let MODO_PREVISAO = false;
+let RESULT_CP = null;
+
+const notificadorApp = { enviar(d, a, m) { EMAILS.unshift({ d, a, m, quando: new Date().toLocaleString("pt-BR"), defeitos: Object.keys(DEF).filter(k => DEF[k]) }); } };
+const SV = () => criarServicos({ db: DB, relogio: () => new Date(), notificador: notificadorApp });
+
+function salvarEstado() {
+  try { localStorage.setItem(CHAVE_LS, JSON.stringify({ db: DB.exportar(), emails: EMAILS.slice(0, 50) })); } catch (e) { /* armazenamento indisponível: segue em memória */ }
+}
+function carregarEstado() {
+  try {
+    const raw = localStorage.getItem(CHAVE_LS);
+    if (raw) { const o = JSON.parse(raw); DB.importar(o.db); EMAILS = o.emails || []; return true; }
+  } catch (e) { /* ignora */ }
+  return false;
+}
+function restaurarExemplo() {
+  const log = DB.registrar; DB.registrar = false;
+  DB.limpar(); EMAILS = [];
+  povoar(DB, notificadorApp);
+  DB.registrar = log;
+  DB.log = [];
+  DB.sql("-- banco recriado a partir de schema.sql e dados de exemplo (App.java)", []);
+  salvarEstado();
+}
+
+/* ---------- mensagens ---------- */
+function mostrarMsg(el, tipo, texto, erro) {
+  if (!el) return;
+  let h = '<div class="msg ' + tipo + '">';
+  if (erro) h += "<code>" + esc(erro.codigo) + "</code> ";
+  h += esc(texto);
+  if (erro) h += ' <span class="nota">— barrado ' + (erro.camada === "banco" ? "pelo banco (restrição do schema)" : "pela regra de negócio") + "</span>";
+  el.innerHTML = h + "</div>";
+}
+function acao(elMsg, fn, textoOk) {
+  try {
+    const r = fn();
+    salvarEstado();
+    renderDados();
+    mostrarMsg(elMsg, "ok", typeof textoOk === "function" ? textoOk(r) : textoOk);
+    return r;
+  } catch (e) {
+    if (e instanceof ErroSGA) { mostrarMsg(elMsg, "erro", e.message, e); renderBanco(); return null; }
+    throw e;
+  }
+}
+
+/* =====================================================================
+   REQUISITOS
+   ===================================================================== */
+const REQ_RF = [
+  ["RF-01", "Cadastrar departamento com código (3 a 6 letras maiúsculas, único), nome e orçamento anual", "Alta", "Médio"],
+  ["RF-02", "Cadastrar curso vinculado a um departamento, com código único, nome e duração de 1 a 12 semestres", "Média", "Baixo"],
+  ["RF-03", "Cadastrar disciplina vinculada a um curso, com código único, nome, carga horária, vagas e indicação se exige laboratório", "Média", "Médio"],
+  ["RF-04", "Cadastrar aluno com nome, e-mail, idade e curso; a matrícula é gerada no formato AAAA + sequencial de 4 dígitos", "Alta", "Médio"],
+  ["RF-05", "Registrar despesa no orçamento do departamento (descrição e valor); a data é a do dia do registro", "Alta", "Alto"],
+  ["RF-06", "Consultar a situação orçamentária de cada departamento (orçado, executado, percentual e situação)", "Alta", "Alto"],
+  ["RF-07", "Cadastrar sala com código único, capacidade e tipo (COMUM ou LABORATORIO)", "Média", "Baixo"],
+  ["RF-08", "Alocar sala para disciplina em um dia da semana (SEG a SAB) e turno (MANHA, TARDE, NOITE)", "Alta", "Alto"],
+  ["RF-09", "Exibir a grade de ocupação das salas (sala × dia × turno)", "Média", "Médio"],
+  ["RF-10", "Alterar a situação da matrícula do aluno (trancar, reativar, concluir, cancelar)", "Alta", "Alto"]
+];
+const REQ_RN = [
+  ["RN-01", "A idade do aluno deve ser um número inteiro entre <b>16 e 100 anos, inclusive</b>", "Partição de equivalência + valor limite"],
+  ["RN-02", "O e-mail deve ter usuário, “@” e domínio contendo ao menos um ponto", "Partição de equivalência"],
+  ["RN-03", "Situação do orçamento: <b>NORMAL</b> abaixo de 80% do orçado; <b>ALERTA</b> de 80% (inclusive) até menos de 100%; <b>ESGOTADO</b> em 100%", "Valor limite"],
+  ["RN-04", "Despesa só é aceita se o valor for maior que zero <b>e</b> o executado após a despesa não ultrapassar o orçado. Gastar exatamente o saldo é permitido", "Valor limite"],
+  ["RN-05", "Alocação aceita se (C1) a sala está livre no dia e turno, (C2) capacidade ≥ vagas e (C3) o tipo é compatível (disciplina com laboratório só vai para LABORATORIO). Se mais de uma falhar, a mensagem segue C1 → C2 → C3", "Tabela de decisão"],
+  ["RN-06", "Matrícula: ATIVA → TRANCADA (trancar); TRANCADA → ATIVA (reativar); ATIVA → FORMADA (concluir); ATIVA ou TRANCADA → CANCELADA (cancelar). FORMADA e CANCELADA são finais", "Transição de estados"],
+  ["RN-07", "Ao mudar de faixa (NORMAL → ALERTA ou ALERTA → ESGOTADO), envia aviso por e-mail à diretoria", "Dublê (spy)"],
+  ["RN-08", "Despesa exige aprovação da diretoria quando o valor for <b>maior que R$ 10.000,00 OU</b> o percentual após a despesa for <b>≥ 90%</b>", "Cobertura de condições / MC/DC"],
+  ["RN-09", "O orçamento anual não pode ser reduzido para menos do que o já executado", "Partição / integração"],
+  ["RN-10", "Não é possível excluir departamento que possua cursos vinculados", "Integração (banco)"],
+  ["RN-11", "Carga horária: 20 a 120 h, múltipla de 20. Vagas: 1 a 200. Capacidade da sala: 10 a 200", "Partição + valor limite"]
+];
+const REQ_RNF = [
+  ["RNF-01", "Confiabilidade (integridade)", "Banco relacional com FOREIGN KEY, UNIQUE e CHECK ativos: o banco rejeita dado inconsistente mesmo que a regra falhe", "CI-01 a CI-05"],
+  ["RNF-02", "Manutenibilidade (testabilidade)", "Cobertura de linhas e desvios ≥ 80% em br.edu.sga.regras; complexidade ciclomática ≤ 10 por método", "JaCoCo em mvn verify (gate)"],
+  ["RNF-03", "Eficiência de desempenho", "Grade de ocupação com 500 alocações montada em até 1 segundo", "Medição na aba Sistema → Distribuição de salas"],
+  ["RNF-04", "Usabilidade", "Toda mensagem de erro informa o campo e o que fazer (ex.: “A idade deve estar entre 16 e 100 anos”)", "Checklist + exploratório"],
+  ["RNF-05", "Segurança", "Consultas sempre parametrizadas; texto digitado nunca é concatenado ao SQL", "CI-04 + registro de SQL"],
+  ["RNF-06", "Portabilidade", "Java 17+ em Windows, Linux e macOS; laboratório HTML em qualquer navegador atual", "Execução em dois SOs"]
+];
+const VALIDACAO = [
+  ["“O sistema deve avisar quando o orçamento estiver quase acabando.”", "Ambíguo e não verificável: o que é “quase”? Quem recebe o aviso?", "RN-03 (80%) e RN-07"],
+  ["“Alunos menores de idade não podem ser cadastrados, exceto em cursos técnicos.”", "Inconsistente com RN-01 (16 anos) e incompleto: o SGA não tem “curso técnico”.", "RN-01"],
+  ["“A sala deve comportar a turma.”", "Fronteira indefinida: capacidade igual às vagas é aceita ou não? É exatamente onde mora o defeito D-01.", "RN-05, condição C2 (≥)"],
+  ["“O sistema deve ser rápido.”", "Não verificável: sem medida, sem carga, sem limite.", "RNF-03"],
+  ["“Despesas grandes precisam de aprovação.”", "Ambíguo: grande em valor absoluto ou em proporção do orçamento? As duas leituras viraram condições ligadas por OU.", "RN-08"]
+];
+function renderRequisitos() {
+  $("#tabRF").innerHTML = "<thead><tr><th>ID</th><th>Requisito</th><th>Prioridade</th><th>Risco</th><th>Casos</th></tr></thead><tbody>" +
+    REQ_RF.map(r => "<tr><td><b>" + r[0] + "</b></td><td>" + r[1] + "</td><td>" + r[2] + "</td><td>" + selo(r[3], r[3] === "Alto" ? "falha" : r[3] === "Médio" ? "aviso" : "") + "</td><td>" + chipsReq(r[0]) + "</td></tr>").join("") + "</tbody>";
+  $("#tabRN").innerHTML = "<thead><tr><th>ID</th><th>Regra</th><th>Técnica sugerida</th><th>Casos</th></tr></thead><tbody>" +
+    REQ_RN.map(r => "<tr><td><b>" + r[0] + "</b></td><td>" + r[1] + "</td><td>" + r[2] + "</td><td>" + chipsReq(r[0]) + "</td></tr>").join("") + "</tbody>";
+  $("#tabRNF").innerHTML = "<thead><tr><th>ID</th><th>Característica ISO/IEC 25010</th><th>Requisito verificável</th><th>Como verificar</th></tr></thead><tbody>" +
+    REQ_RNF.map(r => "<tr><td><b>" + r[0] + "</b></td><td>" + r[1] + "</td><td>" + r[2] + "</td><td>" + r[3] + "</td></tr>").join("") + "</tbody>";
+  $("#listaValidacao").innerHTML = VALIDACAO.map((v, i) =>
+    '<div class="painel"><p style="margin:0 0 6px"><b>V' + (i + 1) + ".</b> " + v[0] + "</p><details><summary>Revelar o problema</summary><p>" + v[1] + '</p><p class="nota">Na versão 1.0 virou: <b>' + v[2] + "</b></p></details></div>").join("");
+}
+function chipsReq(req) {
+  const ids = TESTES.filter(t => t.req === req || t.req.split(/[ /]/).includes(req)).map(t => t.id);
+  return ids.length ? ids.map(chip).join("") : '<span class="nota">—</span>';
+}
+function chip(id) {
+  const r = ULTIMA && ULTIMA.porId[id];
+  const cls = r ? (r.status === "ok" ? "ok" : "fa") : "";
+  return '<span class="chip ' + cls + '">' + esc(id) + "</span>";
+}
+
+/* =====================================================================
+   SISTEMA
+   ===================================================================== */
+function opcoes(sel, lista, rot) {
+  const atual = sel.value;
+  sel.innerHTML = lista.map(x => '<option value="' + x.id + '">' + esc(rot(x)) + "</option>").join("");
+  if (lista.some(x => String(x.id) === atual)) sel.value = atual;
+}
+function renderSelects() {
+  const fontes = {
+    departamento: [DB.todos("departamento"), d => d.codigo + " — " + d.nome],
+    curso: [DB.todos("curso"), c => c.codigo + " — " + c.nome],
+    disciplina: [DB.todos("disciplina"), d => d.codigo + " (" + d.vagas + " vagas" + (d.exige_laboratorio ? ", lab" : "") + ")"],
+    sala: [DB.todos("sala"), s => s.codigo + " (" + s.capacidade + ", " + s.tipo + ")"]
+  };
+  $$("select[data-opcoes]").forEach(s => { const f = fontes[s.dataset.opcoes]; opcoes(s, f[0], f[1]); });
+}
+function situacaoDep(d) {
+  const exec = DB.t.despesa.filter(x => x.departamento_id === d.id).reduce((s, x) => s + x.valor, 0);
+  let pct = null, sit = "—";
+  try { pct = R.percentualExecutado(d.orcamento_anual, exec); sit = R.situacao(d.orcamento_anual, exec); } catch (e) { sit = e.codigo || "—"; }
+  return { exec, pct, sit };
+}
+function renderDepartamentos() {
+  $("#tabDep").innerHTML = "<thead><tr><th>Código</th><th>Nome</th><th class=num>Orçado</th><th class=num>Executado</th><th class=num>Saldo</th><th>Execução</th><th>Situação</th><th></th></tr></thead><tbody>" +
+    DB.todos("departamento").map(d => {
+      const s = situacaoDep(d);
+      const larg = s.pct === null ? 0 : Math.min(100, s.pct);
+      return "<tr><td><b>" + esc(d.codigo) + "</b></td><td>" + esc(d.nome) + "</td><td class=num>" + brl(d.orcamento_anual) + "</td><td class=num>" + brl(s.exec) +
+        "</td><td class=num>" + brl(d.orcamento_anual - s.exec) + '</td><td><div class="barra"><i class="' + esc(s.sit) + '" style="width:' + larg + '%"></i></div><span class="nota">' +
+        (s.pct === null ? "—" : pctFmt(s.pct)) + "</span></td><td>" + selo(s.sit) + '</td><td><button class="btn sec peq" data-excluir-dep="' + d.id + '" title="RN-10">Excluir</button></td></tr>';
+    }).join("") + "</tbody>";
+  const deps = Object.fromEntries(DB.todos("departamento").map(d => [d.id, d.codigo]));
+  $("#tabDesp").innerHTML = "<thead><tr><th>Data</th><th>Depto.</th><th>Descrição</th><th class=num>Valor</th></tr></thead><tbody>" +
+    (DB.todos("despesa").reverse().map(x => "<tr><td>" + esc(x.data) + "</td><td>" + esc(deps[x.departamento_id]) + "</td><td>" + esc(x.descricao) + "</td><td class=num>" + brl(x.valor) + "</td></tr>").join("") ||
+      '<tr><td colspan=4 class="nota">Nenhuma despesa.</td></tr>') + "</tbody>";
+  $("#caixaEmails").innerHTML = EMAILS.length ? EMAILS.map(e =>
+    '<div class="painel" style="margin:0 0 8px; padding:10px 12px"><div class="nota">' + esc(e.quando) + " · para " + esc(e.d) +
+    (e.defeitos && e.defeitos.length ? " · " + selo("com " + e.defeitos.join(", "), "falha") : "") + "</div><b>" + esc(e.a) + "</b><div>" + esc(e.m) + "</div></div>").join("") :
+    '<p class="nota">Nenhum aviso enviado ainda.</p>';
+}
+function renderCursosDisc() {
+  const deps = Object.fromEntries(DB.todos("departamento").map(d => [d.id, d.codigo]));
+  const cursos = Object.fromEntries(DB.todos("curso").map(c => [c.id, c.codigo]));
+  $("#tabCur").innerHTML = "<thead><tr><th>Código</th><th>Nome</th><th class=num>Semestres</th><th>Departamento</th><th></th></tr></thead><tbody>" +
+    DB.todos("curso").map(c => "<tr><td><b>" + esc(c.codigo) + "</b></td><td>" + esc(c.nome) + "</td><td class=num>" + c.duracao_semestres + "</td><td>" + esc(deps[c.departamento_id]) +
+      '</td><td><button class="btn sec peq" data-excluir-cur="' + c.id + '">Excluir</button></td></tr>').join("") + "</tbody>";
+  $("#tabDis").innerHTML = "<thead><tr><th>Código</th><th>Nome</th><th class=num>CH</th><th class=num>Vagas</th><th>Laboratório</th><th>Curso</th></tr></thead><tbody>" +
+    DB.todos("disciplina").map(d => "<tr><td><b>" + esc(d.codigo) + "</b></td><td>" + esc(d.nome) + "</td><td class=num>" + d.carga_horaria + " h</td><td class=num>" + d.vagas +
+      "</td><td>" + (d.exige_laboratorio ? "exige" : "—") + "</td><td>" + esc(cursos[d.curso_id]) + "</td></tr>").join("") + "</tbody>";
+  $("#tabSal").innerHTML = "<thead><tr><th>Código</th><th class=num>Capacidade</th><th>Tipo</th><th class=num>Alocações</th></tr></thead><tbody>" +
+    DB.todos("sala").map(s => "<tr><td><b>" + esc(s.codigo) + "</b></td><td class=num>" + s.capacidade + "</td><td>" + esc(s.tipo) + "</td><td class=num>" +
+      DB.t.alocacao.filter(a => a.sala_id === s.id).length + "</td></tr>").join("") + "</tbody>";
+}
+function renderAlunos() {
+  const cursos = Object.fromEntries(DB.todos("curso").map(c => [c.id, c.codigo]));
+  $("#tabAlu").innerHTML = "<thead><tr><th>Matrícula</th><th>Nome</th><th>E-mail</th><th class=num>Idade</th><th>Curso</th><th>Situação</th><th>Alterar situação (RN-06)</th></tr></thead><tbody>" +
+    DB.todos("aluno").map(a => "<tr><td class=mono>" + esc(a.matricula) + "</td><td>" + esc(a.nome) + "</td><td>" + esc(a.email) + "</td><td class=num>" + a.idade + "</td><td>" +
+      esc(cursos[a.curso_id]) + "</td><td>" + selo(a.status) + '</td><td><div class="acoes" style="gap:4px">' +
+      ["TRANCAR", "REATIVAR", "CONCLUIR", "CANCELAR"].map(ev => '<button class="btn sec peq" data-aluno="' + a.id + '" data-evento="' + ev + '">' + ev.toLowerCase() + "</button>").join("") +
+      "</div></td></tr>").join("") + "</tbody>";
+}
+function htmlGrade(db, turno) {
+  const disc = Object.fromEntries(db.t.disciplina.map(d => [d.id, d.codigo]));
+  const idx = {};
+  db.t.alocacao.forEach(a => { if (a.turno === turno) idx[a.sala_id + "|" + a.dia] = a; });
+  return "<thead><tr><th>Sala</th>" + DIAS.map(d => "<th>" + d + "</th>").join("") + "</tr></thead><tbody>" +
+    db.t.sala.map(s => "<tr><td><b>" + esc(s.codigo) + '</b> <span class="nota">' + s.capacidade + (s.tipo === "LABORATORIO" ? " · lab" : "") + "</span></td>" +
+      DIAS.map(d => { const a = idx[s.id + "|" + d]; return a ? '<td class="ocupada" data-aloc="' + a.id + '" title="Clique para liberar">' + esc(disc[a.disciplina_id]) + "</td>" : '<td class="livre">livre</td>'; }).join("") + "</tr>").join("") + "</tbody>";
+}
+function renderGrade() { $("#tabGrade").innerHTML = htmlGrade(DB, TURNO); }
+
+function medirCarga() {
+  const tmp = new Banco();
+  tmp.importar(DB.exportar());
+  const s = criarServicos({ db: tmp, relogio: () => new Date(), notificador: { enviar() {} } });
+  const dep = tmp.t.departamento[0] || s.criarDepartamento("CARGA", "Carga", 0);
+  const cur = tmp.t.curso[0] || s.criarCurso("CARGA", "Carga", 8, dep.id);
+  const disc = s.criarDisciplina("CARGA-D", "Disciplina de carga", 40, 10, false, cur.id);
+  const ag = agendaDoBanco(tmp);
+  let n = 0, k = 1;
+  while (n < 500) {
+    const sala = s.criarSala("CG-" + String(k++).padStart(3, "0"), 200, "COMUM");
+    for (const t of TURNOS) for (const d of DIAS) { if (n < 500 && s.alocar(ag, disc, sala, d, t) === "ALOCADA") n++; }
+  }
+  const t0 = performance.now();
+  const tabela = document.createElement("table");
+  TURNOS.forEach(t => { tabela.innerHTML = htmlGrade(tmp, t); });
+  const ms = performance.now() - t0;
+  const ok = ms <= 1000;
+  $("#resCarga").innerHTML = n + " alocações em " + tmp.t.sala.length + " salas · grade dos 3 turnos montada em <b>" + ms.toFixed(1).replace(".", ",") + " ms</b> (limite 1.000 ms) " +
+    selo(ok ? "atende RNF-03" : "não atende RNF-03", ok ? "ok" : "falha") + " <span class=nota>— cópia temporária; seus dados não mudaram</span>";
+}
+
+/* =====================================================================
+   BANCO
+   ===================================================================== */
+function renderBanco() {
+  const sel = $("#selTabela");
+  if (!sel.options.length) sel.innerHTML = ORDEM_TABELAS.map(t => "<option>" + t + "</option>").join("");
+  const tab = sel.value || "departamento";
+  const cols = ["id"].concat(ESQUEMA[tab].cols);
+  const linhas = DB.todos(tab);
+  $("#tabBanco").innerHTML = "<thead><tr>" + cols.map(c => "<th>" + c + "</th>").join("") + "</tr></thead><tbody>" +
+    (linhas.map(r => "<tr>" + cols.map(c => "<td class=mono>" + esc(r[c]) + "</td>").join("") + "</tr>").join("") ||
+      '<tr><td colspan="' + cols.length + '" class="nota">Tabela vazia.</td></tr>') + "</tbody>";
+  $("#logSql").innerHTML = DB.log.length ? DB.log.slice().reverse().map(l =>
+    '<span style="color:var(--muted)">' + esc(l.hora) + "</span> " + esc(l.texto) + (l.params.length ? '\n         <span style="color:var(--accent)">parâmetros: ' + esc(JSON.stringify(l.params)) + "</span>" : "") +
+    (l.erro ? '\n         <span style="color:var(--fail)">✗ ' + esc(l.erro) + "</span>" : "")).join("\n") : "(nenhuma instrução ainda)";
+}
+function renderDER() {
+  const ent = {
+    departamento: [20, 20, ["id PK", "codigo UNIQUE", "nome", "orcamento_anual CHECK ≥ 0"]],
+    curso: [300, 20, ["id PK", "codigo UNIQUE", "nome", "duracao_semestres CHECK 1–12", "departamento_id FK"]],
+    disciplina: [580, 20, ["id PK", "codigo UNIQUE", "nome", "carga_horaria CHECK", "vagas CHECK 1–200", "exige_laboratorio", "curso_id FK"]],
+    despesa: [20, 250, ["id PK", "departamento_id FK", "descricao", "valor CHECK > 0", "data"]],
+    aluno: [300, 250, ["id PK", "matricula UNIQUE", "nome", "email UNIQUE", "idade CHECK 16–100", "curso_id FK", "status CHECK"]],
+    alocacao: [580, 250, ["id PK", "disciplina_id FK", "sala_id FK", "dia CHECK", "turno CHECK", "UNIQUE(sala, dia, turno)"]],
+    sala: [860, 250, ["id PK", "codigo UNIQUE", "capacidade CHECK 10–200", "tipo CHECK"]]
+  };
+  const W = 230, H = 22;
+  const caixa = (n, x, y, cs) => '<g><rect x="' + x + '" y="' + y + '" width="' + W + '" height="' + (H * (cs.length + 1) + 6) + '" rx="6" class="no"/>' +
+    '<rect x="' + x + '" y="' + y + '" width="' + W + '" height="' + H + '" rx="6" class="dec"/><text x="' + (x + 10) + '" y="' + (y + 15) + '" font-weight="600">' + n + "</text>" +
+    cs.map((c, i) => '<text x="' + (x + 10) + '" y="' + (y + H + 16 + i * H) + '">' + esc(c) + "</text>").join("") + "</g>";
+  const liga = (a, b, rot) => {
+    const [x1, y1] = [ent[a][0] + W / 2, ent[a][1]], [x2, y2] = [ent[b][0] + W / 2, ent[b][1]];
+    const yA = y1 > y2 ? y1 : y1 + H * (ent[a][2].length + 1) + 6, yB = y1 > y2 ? y2 + H * (ent[b][2].length + 1) + 6 : y2;
+    if (y1 === y2) {
+      const xa = x1 < x2 ? ent[a][0] + W : ent[a][0], xb = x1 < x2 ? ent[b][0] : ent[b][0] + W;
+      return '<line x1="' + xa + '" y1="' + (y1 + 40) + '" x2="' + xb + '" y2="' + (y2 + 40) + '" class="ar"/><text x="' + ((xa + xb) / 2 - 16) + '" y="' + (y1 + 34) + '" font-size="11">' + rot + "</text>";
+    }
+    return '<line x1="' + x1 + '" y1="' + yA + '" x2="' + x2 + '" y2="' + yB + '" class="ar"/><text x="' + ((x1 + x2) / 2 + 6) + '" y="' + ((yA + yB) / 2) + '" font-size="11">' + rot + "</text>";
+  };
+  $("#der").innerHTML = '<div class="rolagem"><svg class="cfg" viewBox="0 0 1110 440" style="min-width:880px; width:100%" role="img" aria-label="Modelo de dados do SGA">' +
+    
+    liga("curso", "departamento", "N:1") + liga("disciplina", "curso", "N:1") + liga("despesa", "departamento", "N:1") + liga("aluno", "curso", "N:1") +
+    liga("alocacao", "disciplina", "N:1") + liga("alocacao", "sala", "N:1") +
+    Object.keys(ent).map(n => caixa(n, ent[n][0], ent[n][1], ent[n][2])).join("") + "</svg></div>" +
+    '<p class="nota">Setas apontam da tabela que tem a chave estrangeira para a tabela referenciada. <code>ON DELETE RESTRICT</code> em quase todas; <code>alocacao.disciplina_id</code> usa <code>CASCADE</code>.</p>';
+}
+
+/* =====================================================================
+   PLANO DE TESTE
+   ===================================================================== */
+const RISCOS = [
+  ["RS-01", "Duas disciplinas na mesma sala, dia e turno", "Média", "Alto", "Tabela de decisão + UNIQUE + integração"],
+  ["RS-02", "Departamento gastar além do orçamento", "Média", "Alto", "Valor limite em centavos (CT-24 a CT-27)"],
+  ["RS-03", "Aviso de orçamento não chegar (ou chegar em excesso)", "Média", "Médio", "Dublê spy (UD-01 a UD-03)"],
+  ["RS-04", "Transição proibida de matrícula", "Média", "Alto", "Transição de estados 0-switch + proibidas"],
+  ["RS-05", "Cadastro de aluno com dado inválido", "Alta", "Médio", "Partição + valor limite + CHECK"],
+  ["RS-06", "SQL injection pelos campos de texto", "Baixa", "Alto", "CI-04 + revisão de código"],
+  ["RS-07", "Lentidão na grade de salas", "Baixa", "Baixo", "Medição RNF-03"]
+];
+const RASTRO = [
+  ["RF-01", "Código único, 3–6 letras", ["CT-50", "CT-51", "CT-52", "CT-53", "CT-54", "CT-55", "CT-73", "CT-74", "CI-01", "CS-02"]],
+  ["RF-04 / RN-01", "Idade 16–100", ["CT-01", "CT-02", "CT-03", "CT-04", "CT-05", "CT-10", "CT-11", "CT-12", "CT-13", "CT-14", "CT-15", "CI-05", "CI-07", "CS-01"]],
+  ["RN-02", "E-mail bem formado", ["CT-06", "CT-07", "CT-08", "CT-09"]],
+  ["RN-03", "Faixas 80% e 100%", ["CT-19", "CT-20", "CT-21", "CT-22", "CT-23", "CB-09", "CB-10", "CB-11", "CB-12"]],
+  ["RF-05 / RN-04", "Não ultrapassa o orçado", ["CT-24", "CT-25", "CT-26", "CT-27", "UD-03", "UD-04"]],
+  ["RN-05 / RF-08", "Tabela de decisão da alocação", ["CT-16", "CT-17", "CT-18", "CT-30", "CT-31", "CT-32", "CT-33", "CT-34", "CT-35", "CB-05", "CB-06", "CB-07", "CB-08", "CI-03", "CI-06", "UD-05", "UD-06", "CS-03", "CA-01", "CA-02"]],
+  ["RN-06 / RF-10", "Transições válidas e proibidas", ["CT-40", "CT-41", "CT-42", "CT-43", "CT-44", "CT-45", "CT-46", "CT-47", "CT-48", "CS-05"]],
+  ["RN-07", "E-mail só na mudança de faixa", ["UD-01", "UD-02", "CS-04"]],
+  ["RN-08", "Valor > 10 mil OU ≥ 90%", ["CB-01", "CB-02", "CB-03", "CB-04"]],
+  ["RN-09", "Orçamento ≥ executado", ["CI-08"]],
+  ["RN-10", "Exclusão com vínculo", ["CI-02"]],
+  ["RN-11", "Faixas de cadastro", ["CT-56", "CT-57", "CT-58", "CT-59", "CT-60", "CT-61", "CT-62", "CT-63", "CT-64", "CT-65", "CT-66", "CT-67", "CT-68", "CT-69", "CT-70", "CT-71", "CT-72"]],
+  ["RNF-03", "Grade ≤ 1 s", ["CS-07"]],
+  ["RNF-05", "Sem SQL injection", ["CI-04", "CS-06"]]
+];
+function renderPlano() {
+  const nivel = { Alta: 2, Média: 1, Baixa: 0 }, imp = { Baixo: 0, Médio: 1, Alto: 2 };
+  let mat = '<table class="risco" style="max-width:560px"><thead><tr><th>Probabilidade ↓ / Impacto →</th><th>Baixo</th><th>Médio</th><th>Alto</th></tr></thead><tbody>';
+  ["Alta", "Média", "Baixa"].forEach(p => {
+    mat += "<tr><th>" + p + "</th>";
+    ["Baixo", "Médio", "Alto"].forEach(i => {
+      const sc = nivel[p] + imp[i];
+      const cls = sc >= 3 ? "r3" : sc >= 2 ? "r2" : "r1";
+      mat += '<td class="' + cls + '">' + RISCOS.filter(r => r[2] === p && r[3] === i).map(r => r[0]).join("<br>") + "</td>";
+    });
+    mat += "</tr>";
+  });
+  mat += "</tbody></table>";
+  const sec = (n, t, corpo, aberto) => "<details" + (aberto ? " open" : "") + "><summary>" + n + ". " + t + "</summary>" + corpo + "</details>";
+  $("#planoConteudo").innerHTML =
+    sec(1, "Contexto do teste", "<p>Itens de teste: regras (<code>br.edu.sga.regras</code>, unidade), serviços (dublês e integração), repositórios + <code>schema.sql</code> (integração) e este laboratório (sistema e aceitação). Fora do escopo: autenticação, boletos, integração financeira real e acessibilidade (risco residual).</p>", true) +
+    sec(2, "Comunicação", "<p>Resultados do pipeline no GitHub Actions; defeitos registrados no modelo de incidente (aba Relatório); relatório de conclusão ao dono do produto no fim da sprint.</p>") +
+    sec(3, "Riscos de produto", "<p>Risco = probabilidade × impacto. Quanto mais para o canto vermelho, mais intensivo o teste.</p><div class=grade2><div>" + mat + "</div><div class=rolagem><table><thead><tr><th>ID</th><th>Risco</th><th>Resposta</th></tr></thead><tbody>" +
+      RISCOS.map(r => "<tr><td><b>" + r[0] + "</b></td><td>" + r[1] + "</td><td>" + r[4] + "</td></tr>").join("") + "</tbody></table></div></div>", true) +
+    sec(4, "Estratégia", "<table><thead><tr><th>Nível (modelo V)</th><th>Base de teste</th><th>Casos</th></tr></thead><tbody>" +
+      "<tr><td>Unidade</td><td>Regras de negócio e código</td><td>CT-01 a CT-82, CB-01 a CB-13, UD-01 a UD-06</td></tr>" +
+      "<tr><td>Integração</td><td>Serviço ↔ repositório ↔ SQLite</td><td>CI-01 a CI-08</td></tr>" +
+      "<tr><td>Sistema</td><td>RF e RNF, neste laboratório</td><td>CS-01 a CS-08 (manuais)</td></tr>" +
+      "<tr><td>Aceitação</td><td>Critérios em Gherkin</td><td>CA-01 e CA-02</td></tr></tbody></table>" +
+      '<p class="nota">Tipos: funcional, não funcional (RNF-01, 03, 04, 05), estrutural (JaCoCo) e de mudança (reteste e regressão após cada correção).</p>', true) +
+    sec(5, "Critérios", "<table><tbody><tr><th>Entrada</th><td>Código compila; requisitos 1.0 revisados; Java 17 e Maven disponíveis</td></tr>" +
+      "<tr><th>Saída</th><td>100% dos casos executados e aprovados; nenhum defeito crítico ou alto aberto; cobertura de linhas e desvios ≥ 80% em regras</td></tr>" +
+      "<tr><th>Suspensão</th><td>Build quebrado ou mais de 30% dos casos falhando pelo mesmo defeito bloqueante</td></tr>" +
+      "<tr><th>Retomada</th><td>Defeito bloqueante corrigido e reteste aprovado</td></tr></tbody></table>", true) +
+    sec(6, "Testware", "<p>Classes de teste em <code>src/test/java</code> organizadas por técnica, relatório JaCoCo em <code>target/site/jacoco</code>, relatórios do Surefire, este laboratório e os registros de incidente.</p>") +
+    sec(7, "Cronograma", "<table><tbody><tr><td>Aula 01</td><td>Diagnóstico ISO/IEC 25010 do SGA</td></tr><tr><td>Aula 02</td><td>Validar requisitos, escrever critérios de aceitação, montar o plano</td></tr><tr><td>Aulas 04/05</td><td>Projetar e executar os casos caixa-preta</td></tr><tr><td>Aula 06</td><td>Caixa-branca, injeção de defeitos, incidentes e relatório</td></tr></tbody></table>") +
+    sec(8, "Pessoas", "<p>Grupos de 3 a 4. Papéis rotativos: analista de teste, executor, desenvolvedor (corrige o defeito injetado) e dono do produto (aprova o relatório).</p>") +
+    sec(9, "Métricas", "<p>Planejados × executados × aprovados; defeitos por severidade; cobertura de linhas e desvios; taxa de detecção dos defeitos injetados D-01 a D-05.</p>") +
+    sec(10, "Aprovação", "<p>Revisado pelo professor (gerente de qualidade) e aprovado pelo dono do produto do grupo.</p>") +
+    '<h3 style="margin-top:22px">Matriz de rastreabilidade viva</h3><p class="nota">' +
+    (ULTIMA ? "Cores da execução de " + ULTIMA.quando.toLocaleTimeString("pt-BR") + (ULTIMA.defeitos.length ? " (com " + ULTIMA.defeitos.join(", ") + ")" : "") + ". Casos CS e CA são manuais e ficam em cinza." :
+      "Execute a suíte para colorir os casos. Casos CS e CA são manuais e ficam em cinza.") + "</p>" +
+    '<div class="rolagem"><table><thead><tr><th>Requisito</th><th>Critério</th><th>Casos</th><th>Situação</th></tr></thead><tbody>' +
+    RASTRO.map(r => {
+      const auto = r[2].filter(id => TESTE_POR_ID[id]);
+      let st = '<span class="status pend">não executado</span>';
+      if (ULTIMA && auto.length) {
+        const f = auto.filter(id => ULTIMA.porId[id] && ULTIMA.porId[id].status !== "ok").length;
+        st = f ? '<span class="status fa">' + f + " falha(s)</span>" : '<span class="status ok">atendido</span>';
+      } else if (!auto.length) st = '<span class="status pend">manual</span>';
+      return "<tr><td><b>" + r[0] + "</b></td><td>" + r[1] + "</td><td>" + r[2].map(chip).join("") + "</td><td>" + st + "</td></tr>";
+    }).join("") + "</tbody></table></div>";
+}
+
+/* =====================================================================
+   CAIXA-PRETA
+   ===================================================================== */
+const faixa = (a, b) => TESTES.filter(t => t.id >= a && t.id <= b).map(t => t.id);
+const GRUPOS_CP = [
+  { titulo: "1. Partição de equivalência — RN-01 e RN-02", ids: faixa("CT-01", "CT-09"),
+    texto: "Divide o domínio de entrada em classes que o sistema deve tratar do mesmo jeito e testa um representante de cada. Classes inválidas entram uma por caso: dois dados inválidos no mesmo caso mascaram um ao outro.",
+    extra: "<table><thead><tr><th>Entrada</th><th>Classes válidas</th><th>Classes inválidas</th></tr></thead><tbody><tr><td>Idade</td><td>CE-2: 16 ≤ idade ≤ 100</td><td>CE-1: &lt; 16 · CE-3: &gt; 100 · CE-4: vazio · CE-5: não numérico</td></tr><tr><td>E-mail</td><td>CE-6: usuário@domínio.tld</td><td>CE-7: sem @ · CE-8: domínio sem ponto · CE-9: vazio</td></tr></tbody></table>" },
+  { titulo: "2. Análise de valor limite (3 valores) — RN-01, RN-05, RN-03, RN-04", ids: faixa("CT-10", "CT-27"),
+    texto: "Para cada fronteira: o último valor antes, a própria borda e o primeiro depois. É onde vivem os erros de < trocado por <= — ligue D-01, D-02 ou D-04 e veja qual caso pega cada um.",
+    extra: "" },
+  { titulo: "3. Tabela de decisão — RN-05", ids: faixa("CT-30", "CT-35"),
+    texto: "Três condições combinadas geram 2³ = 8 regras. Como C1 falso bloqueia qualquer coisa, as regras R5–R8 colapsam em uma; R3–R4 também. CT-34 e CT-35 verificam o “indiferente” (—) e a prioridade das mensagens.",
+    extra: '<div class="rolagem"><table><thead><tr><th>Condição</th><th>R1</th><th>R2</th><th>R3</th><th>R4</th><th>R5</th><th>R6</th><th>R7</th><th>R8</th></tr></thead><tbody>' +
+      "<tr><td>C1 sala livre?</td><td>S</td><td>S</td><td>S</td><td>S</td><td>N</td><td>N</td><td>N</td><td>N</td></tr>" +
+      "<tr><td>C2 capacidade ≥ vagas?</td><td>S</td><td>S</td><td>N</td><td>N</td><td>S</td><td>S</td><td>N</td><td>N</td></tr>" +
+      "<tr><td>C3 tipo compatível?</td><td>S</td><td>N</td><td>S</td><td>N</td><td>S</td><td>N</td><td>S</td><td>N</td></tr>" +
+      "<tr><th>Ação</th><th>aloca</th><th>tipo</th><th colspan=2>capacidade</th><th colspan=4>sala ocupada</th></tr>" +
+      "<tr><td class=nota>Casos</td><td>CT-30</td><td>CT-31</td><td colspan=2>CT-32</td><td colspan=3>CT-33</td><td>CT-35</td></tr></tbody></table></div>" },
+  { titulo: "4. Transição de estados — RN-06", ids: faixa("CT-40", "CT-48"),
+    texto: "Cobertura 0-switch: cada transição válida exercitada uma vez (5 casos) e, depois, as transições proibidas mais arriscadas. Use também os botões da aba Sistema → Alunos: eles ficam todos habilitados justamente para isso.",
+    extra: '<div class="rolagem"><table><thead><tr><th>Estado \\ Evento</th><th>TRANCAR</th><th>REATIVAR</th><th>CONCLUIR</th><th>CANCELAR</th></tr></thead><tbody>' +
+      "<tr><th>ATIVA</th><td>TRANCADA</td><td>✗ CT-48</td><td>FORMADA</td><td>CANCELADA</td></tr>" +
+      "<tr><th>TRANCADA</th><td>✗</td><td>ATIVA</td><td>✗ CT-47</td><td>CANCELADA</td></tr>" +
+      "<tr><th>FORMADA</th><td>✗</td><td>✗</td><td>✗</td><td>✗ CT-45</td></tr>" +
+      "<tr><th>CANCELADA</th><td>✗</td><td>✗ CT-46</td><td>✗</td><td>✗</td></tr></tbody></table></div>" },
+  { titulo: "5. Validações de cadastro — partição + valor limite — RF-01 a RF-04, RN-11", ids: faixa("CT-50", "CT-82"),
+    texto: "A mesma regra pede as duas técnicas: a partição encontra as classes, o valor limite escolhe o representante mais perigoso de cada borda. CT-58 (50 h) testa a classe “não múltiplo de 20”, que nenhuma borda pegaria.",
+    extra: "" }
+];
+function renderCP() {
+  $("#cpConteudo").innerHTML = '<div class="acoes" style="margin-bottom:14px"><label class="nota"><input type="checkbox" id="modoPrev"' + (MODO_PREVISAO ? " checked" : "") +
+    "> Modo previsão: esconder o resultado esperado até executar</label></div>" +
+    GRUPOS_CP.map((g, gi) => {
+      const linhas = g.ids.map(id => {
+        const t = TESTE_POR_ID[id], r = RESULT_CP && RESULT_CP.porId[id];
+        const st = r ? (r.status === "ok" ? '<span class="status ok">passou</span>' : '<span class="status fa">falhou</span>') : '<span class="status pend">—</span>';
+        const esp = MODO_PREVISAO && !r ? '<span class="nota">?</span>' : esc(t.esperado);
+        return "<tr" + (r && r.status !== "ok" ? ' class="falhou"' : "") + "><td class=mono><b>" + id + "</b></td><td>" + esc(t.desc) + "</td><td class=mono>" + esc(t.entrada) +
+          "</td><td class=mono>" + esp + "</td><td class=mono>" + (r ? esc(r.obtido) : "—") + "</td><td>" + st + "</td></tr>";
+      }).join("");
+      return '<div class="painel"><div class="acoes" style="justify-content:space-between"><h3 style="margin:0">' + g.titulo + '</h3><button class="btn sec peq" data-rodar-grupo="' + gi + '">Executar esta técnica</button></div>' +
+        "<p>" + g.texto + "</p>" + g.extra + '<div class="rolagem" style="margin-top:10px"><table><thead><tr><th>Caso</th><th>Descrição</th><th>Entrada</th><th>Esperado</th><th>Obtido</th><th>Resultado</th></tr></thead><tbody>' +
+        linhas + "</tbody></table></div></div>";
+    }).join("");
+}
+function rodarCP(ids) {
+  const r = executarSuite(ids.map(id => TESTE_POR_ID[id]));
+  RESULT_CP = RESULT_CP || { porId: {} };
+  Object.assign(RESULT_CP.porId, r.porId);
+  const todos = Object.values(RESULT_CP.porId), f = todos.filter(x => x.status !== "ok").length;
+  $("#resumoCP").innerHTML = todos.length + " casos executados · " + (todos.length - f) + " passaram · " + (f ? '<span class="status fa">' + f + " falharam</span>" : "0 falharam") +
+    (r.defeitos.length ? " · com " + r.defeitos.join(", ") + " ligado" : "");
+  renderCP();
+}
+
+/* =====================================================================
+   CAIXA-BRANCA
+   ===================================================================== */
+function renderCB() {
+  const M = METODOS[METODO];
+  const sel = SELECIONADOS[METODO];
+  $("#listaCB").innerHTML = M.casos.map(id => {
+    const t = TESTE_POR_ID[id];
+    const r = ANALISE && ANALISE.metodo === METODO && ANALISE.resultados.find(x => x.id === id);
+    const st = r ? (r.status === "ok" ? ' <span class="status ok">✓</span>' : ' <span class="status fa">✗ ' + esc(r.obtido) + "</span>") : "";
+    return '<label><input type="checkbox" data-caso="' + id + '"' + (sel.includes(id) ? " checked" : "") + '><span class="id">' + id + "</span><span>" + esc(t.desc) + ' <span class="nota">(' + esc(t.entrada) + ")</span>" + st + "</span></label>";
+  }).join("");
+  const a = ANALISE && ANALISE.metodo === METODO ? ANALISE : null;
+  const mut = DEF[M.defeito];
+  $("#codigoCB").innerHTML = '<div class="l" style="background:var(--surface)"><span class="n"></span><span></span><span class="t nota">' + M.titulo + " — " + M.req + "</span></div>" +
+    M.codigo.map((txt, i) => {
+      const n = i + 1;
+      const cls = a ? a.estadoLinha(n) : "";
+      let h = esc(txt);
+      if (mut && n === M.mut.linha) h = h.replace(esc(M.mut.de), '<span class="mut" title="defeito ' + M.defeito + '">' + esc(M.mut.para) + "</span>");
+      return '<div class="l ' + cls + '"><span class="n">' + n + '</span><span class="g"></span><span class="t">' + h + "</span></div>";
+    }).join("");
+  const med = (rot, x) => {
+    const p = x ? Math.round(x.cob / x.tot * 100) : null;
+    return '<div class="medidor"><b>' + (p === null ? "—" : p + "%") + "</b><span>" + rot + (x ? " · " + x.cob + "/" + x.tot : "") + '</span><div class="barra"><i style="width:' + (p || 0) + "%;background:" +
+      (p === null ? "var(--line)" : p === 100 ? "var(--pass)" : p >= 80 ? "var(--warn)" : "var(--fail)") + '"></i></div></div>';
+  };
+  $("#medidores").innerHTML = med("Comandos (linhas)", a && a.linhas) + med("Decisões", a && a.decisoes) + med("Condições (desvios JaCoCo)", a && a.condicoes);
+  $("#extraCB").innerHTML = extraMetodo(a);
+  $("#analiseCB").innerHTML = analiseTexto(a);
+}
+function extraMetodo(a) {
+  const M = METODOS[METODO];
+  if (METODO === "EAD") {
+    const sel = a ? a.ids : SELECIONADOS.EAD;
+    return '<h3 style="margin-top:16px">Tabela verdade e curto-circuito</h3><div class="rolagem"><table><thead><tr><th>Caso</th><th>A: valor &gt; 10 mil</th><th>B: % ≥ 90</th><th>A || B</th><th>B é avaliada?</th><th>no conjunto</th></tr></thead><tbody>' +
+      Object.keys(EAD_CASOS).map(id => {
+        const c = EAD_CASOS[id];
+        return "<tr><td class=mono>" + id + "</td><td>" + (c.A ? "V" : "F") + "</td><td>" + (c.B ? "V" : "F") + "</td><td>" + (c.saida ? "V" : "F") + "</td><td>" +
+          (c.avaliaB ? "sim" : '<span class="nota">não — A já decidiu</span>') + "</td><td>" + (sel.includes(id) ? "✓" : "") + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
+  }
+  if (METODO === "AVL") return cfgAvaliar(a);
+  return '<h3 style="margin-top:16px">Caminhos de situacao()</h3><table><thead><tr><th>Caminho</th><th>Decisões</th><th>Caso</th><th>Coberto</th></tr></thead><tbody>' +
+    [["1 · ESGOTADO", "d1 = V", "CB-09", 4], ["2 · ALERTA", "d1 = F, d2 = V", "CB-10", 7], ["3 · NORMAL", "d1 = F, d2 = F", "CB-11", 9], ["4 · exceção", "orçado ≤ 0 em percentualExecutado", "CB-12", 2]]
+      .map(p => {
+        let cob = "—";
+        if (a) cob = p[0].includes("exceção") ? (a.resultados.some(r => r.id === "CB-12") ? "sim" : "não") : (a.cob.linhas.has(p[3]) ? "sim" : "não");
+        return "<tr><td>" + p[0] + "</td><td>" + p[1] + "</td><td class=mono>" + p[2] + "</td><td>" + cob + "</td></tr>";
+      }).join("") + '</tbody></table><p class="nota">V(G) = 2 decisões + 1 = 3, mais o caminho de exceção herdado. Nenhum destes casos toca a borda de 80% — só CT-20 faz isso.</p>';
+}
+function cfgAvaliar(a) {
+  const dec = k => a ? (a.cob.dec[k] || { T: 0, F: 0 }) : null;
+  const d1 = dec("d1"), d2 = dec("d2"), d3 = dec("d3");
+  const cor = (d, lado) => !a ? "var(--muted)" : (d && d[lado] > 0 ? "var(--pass)" : "var(--fail)");
+  const tr = (d, lado) => !a ? "" : (d && d[lado] > 0 ? "" : ' stroke-dasharray="5 4"');
+  const seg = (x1, y1, x2, y2, c, dash, rot) => '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" class="ar" style="stroke:' + c + ';stroke-width:2"' + dash + "/>" +
+    (rot ? '<text x="' + ((x1 + x2) / 2 + 6) + '" y="' + ((y1 + y2) / 2 - 4) + '" font-size="11">' + rot + "</text>" : "");
+  const no = (x, y, t, d) => '<rect x="' + (x - 78) + '" y="' + (y - 16) + '" width="156" height="32" rx="' + (d ? 16 : 5) + '" class="' + (d ? "no dec" : "no") + '"/><text x="' + x + '" y="' + (y + 4) + '" text-anchor="middle">' + t + "</text>";
+  const retCor = (d, lado) => cor(d, lado);
+  return '<h3 style="margin-top:16px">Grafo de fluxo de controle de avaliar()</h3><div class="rolagem"><svg class="cfg" viewBox="0 0 660 390" style="width:100%;min-width:480px" role="img" aria-label="Grafo de fluxo de controle">' +
+    
+    seg(250, 56, 382, 56, cor(d1, "T"), tr(d1, "T"), "V") + seg(170, 72, 170, 124, cor(d1, "F"), tr(d1, "F"), "F") +
+    seg(250, 140, 382, 140, cor(d2, "T"), tr(d2, "T"), "V") + seg(170, 156, 170, 208, cor(d2, "F"), tr(d2, "F"), "F") +
+    seg(250, 224, 382, 224, cor(d3, "T"), tr(d3, "T"), "V") + seg(170, 240, 170, 292, cor(d3, "F"), tr(d3, "F"), "F") +
+    seg(538, 64, 548, 330, retCor(d1, "T"), "", "") + seg(538, 148, 548, 330, retCor(d2, "T"), "", "") + seg(538, 228, 548, 330, retCor(d3, "T"), "", "") + seg(250, 308, 470, 344, retCor(d3, "F"), "", "") +
+    no(170, 56, "1 · if (!salaLivre)", true) + no(460, 56, "2 · SALA_OCUPADA") + no(170, 140, "3 · if (cap &lt; vagas)", true) + no(460, 140, "4 · CAPACIDADE") +
+    no(170, 224, "5 · if (lab &amp;&amp; tipo≠LAB)", true) + no(460, 224, "6 · TIPO_SALA") + no(170, 308, "7 · ALOCADA") + no(548, 346, "8 · fim") +
+    '</svg></div><p class="nota">8 nós, 10 arestas: V(G) = 10 − 8 + 2 = 4 = número de decisões + 1. Contando o <code>&amp;&amp;</code> como decisão extra (Checkstyle, SonarQube), V(G) = 5 — por isso CT-30 aparece como quinto caso: é o único que faz <code>tipo ≠ LAB</code> ser falso.</p>';
+}
+function analiseTexto(a) {
+  const M = METODOS[METODO];
+  if (!a) return "<h3>Leitura dos resultados</h3><p class=nota>Marque os casos e clique em <b>Executar conjunto</b>. O visor mostra o que foi executado; o painel diz se o conjunto também é capaz de achar o defeito " + M.defeito.replace("D", "D-") + ".</p>";
+  const pct = x => Math.round(x.cob / x.tot * 100);
+  const falhas = a.resultados.filter(r => r.status !== "ok");
+  let h = "<h3>Leitura dos resultados</h3><p>" + a.ids.length + " caso(s) · comandos " + pct(a.linhas) + "% · decisões " + pct(a.decisoes) + "% · condições " + pct(a.condicoes) + "%.</p>";
+  if (a.condicoes.cob < a.condicoes.tot) {
+    const faltam = M.conds.filter(k => { const x = a.cob.cond[k] || { T: 0, F: 0 }; return !(x.T && x.F); })
+      .map(k => { const x = a.cob.cond[k] || { T: 0, F: 0 }; return "<code>" + esc(M.nomesCond[k]) + "</code> nunca " + (!x.T && !x.F ? "avaliada" : x.T ? "falsa" : "verdadeira"); });
+    h += "<p>JaCoCo diria: <b>" + (a.condicoes.tot - a.condicoes.cob) + " of " + a.condicoes.tot + " branches missed</b> — " + faltam.join("; ") + ".</p>";
+  }
+  h += "<p><b>Mutante " + M.defeito.replace("D", "D-") + "</b> (" + esc(DEF_INFO[M.defeito].mudanca) + "): " +
+    (a.matadores.length ? '<span class="status ok">detectado</span> por ' + a.matadores.join(", ") + "." : '<span class="status fa">sobrevive</span> — nenhum caso deste conjunto falharia com o defeito.') + "</p>";
+  if (METODO === "EAD") {
+    const m = mcdc(a.ids);
+    h += "<p><b>MC/DC</b>: independência de A " + (m.A ? "demonstrada (CB-03 × CB-02)" : "não demonstrada") + "; de B " + (m.B ? "demonstrada (CB-04 × CB-02)" : "não demonstrada") +
+      ". Conjunto mínimo: n + 1 = 3 casos {CB-02, CB-03, CB-04} — CB-01 não é necessário.</p>";
+  }
+  if (a.ids.includes("CB-13") && !a.matadores.includes("CB-13"))
+    h += '<div class="dica">CB-13 deixa as métricas altas e não tem nenhum <i>assert</i>: passa com ou sem o defeito. Cobertura mede o que foi <b>executado</b>, não o que foi <b>verificado</b>.</div>';
+  if (a.linhas.cob === a.linhas.tot && !a.matadores.length)
+    h += '<div class="dica">100% de comandos e o defeito passou despercebido. É a armadilha dos 100%: falta um caso na borda (' + (METODO === "AVL" ? "capacidade == vagas: CT-17 ou CT-30" : METODO === "SIT" ? "exatamente 80%: CT-20" : "A=V e B=F, ou A=F e B=V") + ").</div>";
+  if (falhas.length) h += '<p class="nota">Casos que falharam com os defeitos ligados no topo agora: ' + falhas.map(f => f.id).join(", ") + ".</p>";
+  return h;
+}
+function rodarCB() {
+  const ids = SELECIONADOS[METODO].slice().sort();
+  ANALISE = Object.assign(analisarCobertura(METODO, ids), { metodo: METODO, ids });
+  renderCB();
+}
+
+/* =====================================================================
+   SUÍTE, MATRIZ E RELATÓRIO
+   ===================================================================== */
+function rodarSuite() {
+  ULTIMA = executarSuite();
+  const so = $("#soFalhas").checked;
+  const porClasse = {};
+  TESTES.forEach(t => { (porClasse[t.classe] = porClasse[t.classe] || []).push(t); });
+  let out = '$ mvn test\n[INFO] Scanning for projects...\n[INFO] --- surefire:3.5.2:test (default-test) @ sga-academico ---\n[INFO] -------------------------------------------------------\n[INFO]  T E S T S\n[INFO] -------------------------------------------------------\n';
+  if (ULTIMA.defeitos.length) out += '<span class="fa">[WARN] Código com defeito injetado: ' + ULTIMA.defeitos.join(", ") + "</span>\n";
+  Object.keys(porClasse).sort().forEach(cl => {
+    const rs = porClasse[cl].map(t => ULTIMA.porId[t.id]);
+    const f = rs.filter(r => r.status === "falha").length, e = rs.filter(r => r.status === "erro").length;
+    const ms = rs.reduce((s, r) => s + r.ms, 0) / 1000;
+    out += '<span class="cl">[INFO] Running br.edu.sga.' + cl + "</span>\n";
+    porClasse[cl].forEach(t => {
+      const r = ULTIMA.porId[t.id];
+      if (so && r.status === "ok") return;
+      out += r.status === "ok" ? '  <span class="ok">✔</span> ' + esc(t.id + " | " + t.desc) + "\n" :
+        '  <span class="fa">✘ ' + esc(t.id + " | " + t.desc) + "\n      " + esc(r.msg) + "</span>\n";
+    });
+    out += (f + e ? '<span class="fa">[ERROR] ' : "[INFO] ") + "Tests run: " + rs.length + ", Failures: " + f + ", Errors: " + e + ", Skipped: 0, Time elapsed: " + ms.toFixed(3) + " s" + (f + e ? " &lt;&lt;&lt; FAILURE!</span>" : "") + "\n";
+  });
+  const fal = ULTIMA.resultados.filter(r => r.status !== "ok");
+  const nf = fal.filter(r => r.status === "falha").length, ne = fal.length - nf;
+  out += "[INFO]\n[INFO] Results:\n[INFO]\n";
+  if (fal.length) {
+    out += '<span class="fa">[ERROR] Failures:\n' + fal.map(r => "[ERROR]   " + TESTE_POR_ID[r.id].classe.split(".").pop() + " " + r.id + " " + r.msg).map(esc).join("\n") + "\n</span>";
+  }
+  out += (fal.length ? '<span class="fa">[ERROR] ' : "[INFO] ") + "Tests run: " + ULTIMA.resultados.length + ", Failures: " + nf + ", Errors: " + ne + ", Skipped: 0" + (fal.length ? "</span>" : "") + "\n[INFO] ------------------------------------------------------------------------\n" +
+    (fal.length ? '<span class="fa">[INFO] BUILD FAILURE</span>' : '<span class="ok">[INFO] BUILD SUCCESS</span>') + "\n[INFO] ------------------------------------------------------------------------\n[INFO] Total time: " + (ULTIMA.ms / 1000).toFixed(3) + " s";
+  $("#consoleSuite").innerHTML = out;
+  const ok = ULTIMA.resultados.length - fal.length;
+  $("#resumoSuite").innerHTML = '<div class="kpis" style="margin-bottom:12px"><div class="kpi"><b>' + ULTIMA.resultados.length + '</b><span>executados</span></div><div class="kpi"><b style="color:var(--pass)">' + ok +
+    '</b><span>aprovados</span></div><div class="kpi"><b style="color:' + (fal.length ? "var(--fail)" : "var(--ink)") + '">' + fal.length + '</b><span>reprovados</span></div><div class="kpi"><b>' +
+    (ULTIMA.defeitos.length ? ULTIMA.defeitos.map(d => d.replace("D", "D-")).join(", ") : "nenhum") + "</b><span>defeitos ligados</span></div></div>";
+  renderPlano(); renderRequisitos(); renderRelatorio(); renderInicio();
+}
+function renderMatriz() {
+  MATRIZ = matrizDeteccao();
+  const cols = [["Caixa-preta", "CT"], ["Caixa-branca", "CB"], ["Integração", "CI"], ["Dublês", "UD"]];
+  $("#matrizDefeitos").innerHTML = '<div class="painel"><h3>Matriz de detecção — suíte executada 5 vezes, com um defeito ligado por vez</h3><p class="nota">É o teste de mutação feito à mão: cada defeito é um mutante; um mutante “morre” quando pelo menos um caso falha. Mesmo resultado obtido no projeto Java.</p>' +
+    '<div class="rolagem"><table><thead><tr><th>Defeito</th><th>Alteração</th>' + cols.map(c => "<th>" + c[0] + "</th>").join("") + "<th>Situação</th></tr></thead><tbody>" +
+    Object.keys(MATRIZ).map(d => "<tr><td><b>" + d.replace("D", "D-") + "</b></td><td>" + esc(DEF_INFO[d].onde) + "<br><code>" + esc(DEF_INFO[d].mudanca) + "</code></td>" +
+      cols.map(c => "<td>" + (MATRIZ[d].filter(id => id.startsWith(c[1])).map(id => '<span class="chip fa">' + id + "</span>").join("") || '<span class="nota">—</span>') + "</td>").join("") +
+      "<td>" + (MATRIZ[d].length ? selo("morto por " + MATRIZ[d].length, "ok") : selo("sobreviveu", "falha")) + "</td></tr>").join("") + "</tbody></table></div>" +
+    '<div class="dica">Perguntas: por que D-02 e D-04 são detectados por um único caso cada? O que aconteceria com D-01 se CT-17 e CT-30 fossem apagados? Por que CB-13 nunca aparece nesta tabela?</div></div>';
+}
+function renderRelatorio() {
+  const el = $("#relatorioConteudo");
+  if (!ULTIMA) { el.innerHTML = '<div class="painel cinza"><p>Nenhuma execução registrada ainda.</p><button class="btn" data-ir="suite" data-rodar="1">Executar a suíte agora</button></div>'; return; }
+  const fal = ULTIMA.resultados.filter(r => r.status !== "ok");
+  const porClasse = {};
+  TESTES.forEach(t => { const r = ULTIMA.porId[t.id]; const c = porClasse[t.classe] || (porClasse[t.classe] = { n: 0, ok: 0 }); c.n++; if (r.status === "ok") c.ok++; });
+  const opt = l => l.map(x => "<option>" + x + "</option>").join("");
+  const nav = navigator.userAgent.match(/(Firefox|Edg|Chrome|Safari)\/[\d.]+/);
+  let h = '<div class="painel"><h3>1. Registro de execução</h3><p class="nota">Executado em ' + ULTIMA.quando.toLocaleString("pt-BR") + " · build SGA 1.0" + (ULTIMA.defeitos.length ? " com " + ULTIMA.defeitos.join(", ") : " sem defeitos injetados") +
+    " · " + (nav ? nav[0] : "navegador") + '</p><div class="rolagem"><table><thead><tr><th>Classe de teste</th><th class=num>Executados</th><th class=num>Aprovados</th><th class=num>Reprovados</th></tr></thead><tbody>' +
+    Object.keys(porClasse).sort().map(c => "<tr><td class=mono>" + c + "</td><td class=num>" + porClasse[c].n + "</td><td class=num>" + porClasse[c].ok + "</td><td class=num>" + (porClasse[c].n - porClasse[c].ok) + "</td></tr>").join("") +
+    "</tbody></table></div></div>";
+  h += '<div class="painel"><h3>2. Relatos de incidente (' + fal.length + ")</h3>";
+  if (!fal.length) h += "<p class=nota>Nenhuma falha nesta execução. Ligue um defeito no topo e execute a suíte de novo para praticar o relato.</p>";
+  fal.forEach((r, i) => {
+    const t = TESTE_POR_ID[r.id];
+    h += '<details open><summary>INC-' + String(i + 1).padStart(3, "0") + " · " + esc(t.id) + " — " + esc(t.desc) + '</summary><table><tbody>' +
+      "<tr><th>Título</th><td>" + esc(t.req) + ": " + esc(t.desc) + " retorna resultado diferente do especificado</td></tr>" +
+      "<tr><th>Requisito</th><td>" + esc(t.req) + "</td></tr><tr><th>Caso de teste</th><td class=mono>" + esc(t.id) + " (" + esc(t.classe) + ")</td></tr>" +
+      "<tr><th>Ambiente</th><td>Laboratório HTML · SGA 1.0" + (ULTIMA.defeitos.length ? " · build com " + ULTIMA.defeitos.join(", ") : "") + "</td></tr>" +
+      "<tr><th>Passos / entrada</th><td class=mono>" + esc(t.entrada) + "</td></tr>" +
+      "<tr><th>Resultado esperado</th><td class=mono>" + esc(r.esperadoAssert || t.esperado) + "</td></tr>" +
+      "<tr><th>Resultado obtido</th><td class=mono>" + esc(r.obtido) + "</td></tr>" +
+      "<tr><th>Evidência</th><td class=mono>" + esc(r.msg) + "</td></tr>" +
+      '<tr><th>Severidade</th><td><select style="width:auto">' + opt(["— escolher —", "Crítica", "Alta", "Média", "Baixa"]) + '</select> <span class="nota">impacto técnico no sistema</span></td></tr>' +
+      '<tr><th>Prioridade</th><td><select style="width:auto">' + opt(["— escolher —", "Urgente", "Alta", "Média", "Baixa"]) + '</select> <span class="nota">urgência de correção para o negócio</span></td></tr>' +
+      "<tr><th>Status</th><td>" + selo("Aberto", "aviso") + "</td></tr></tbody></table></details>";
+  });
+  h += "</div>";
+  const aprov = ULTIMA.resultados.length - fal.length;
+  const libera = fal.length === 0;
+  h += '<div class="painel"><h3>3. Relatório de conclusão</h3><table><tbody>' +
+    "<tr><th>Casos planejados (automatizados)</th><td>" + TESTES.length + "</td></tr><tr><th>Executados</th><td>" + ULTIMA.resultados.length + " (100%)</td></tr>" +
+    "<tr><th>Aprovados / reprovados</th><td>" + aprov + " / " + fal.length + "</td></tr>" +
+    "<tr><th>Requisitos afetados</th><td>" + ([...new Set(fal.map(r => TESTE_POR_ID[r.id].req))].join(", ") || "nenhum") + "</td></tr>" +
+    "<tr><th>Casos manuais (CS, CA)</th><td>registrar à parte — não executados por esta página</td></tr>" +
+    "<tr><th>Critério de saída</th><td>" + (libera ? selo("atendido", "ok") : selo("não atendido", "falha")) + " <span class=nota>100% aprovados e nenhum defeito alto aberto; cobertura ≥ 80% verificada no Java com <code>mvn verify</code></span></td></tr>" +
+    "<tr><th>Recomendação</th><td><b>" + (libera ? "Liberar a release SGA 1.0" : "Não liberar: corrigir, retestar os casos reprovados e rodar a regressão completa") + "</b></td></tr>" +
+    "</tbody></table><p class=nota>Reteste = executar de novo o caso que falhou depois da correção. Regressão = executar a suíte toda, para garantir que a correção não quebrou outra coisa.</p></div>";
+  el.innerHTML = h;
+}
+function renderInicio() {
+  const k = (v, r, cor) => '<div class="kpi"><b' + (cor ? ' style="color:' + cor + '"' : "") + ">" + v + "</b><span>" + r + "</span></div>";
+  const ativos = Object.keys(DEF).filter(d => DEF[d]);
+  const fal = ULTIMA ? ULTIMA.resultados.filter(r => r.status !== "ok").length : null;
+  $("#kpisInicio").innerHTML = k(DB.contar("departamento"), "departamentos") + k(DB.contar("aluno"), "alunos") + k(DB.contar("alocacao"), "alocações") +
+    k(ULTIMA ? (ULTIMA.resultados.length - fal) + "/" + ULTIMA.resultados.length : "—", "testes aprovados", ULTIMA ? (fal ? "var(--fail)" : "var(--pass)") : "") +
+    k(ativos.length ? ativos.map(d => d.replace("D", "D-")).join(" ") : "0", "defeitos ligados", ativos.length ? "var(--fail)" : "");
+}
+
+/* ---------- render agregado ---------- */
+function renderDados() { renderSelects(); renderDepartamentos(); renderCursosDisc(); renderAlunos(); renderGrade(); renderBanco(); renderInicio(); }
+
+/* =====================================================================
+   EVENTOS
+   ===================================================================== */
+function ligarEventos() {
+  // navegação principal
+  const irPara = aba => {
+    $$("nav.lateral button[data-aba]").forEach(b => { if (b.dataset.aba === aba) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+    $$("section.aba").forEach(s => s.classList.toggle("ativa", s.id === "aba-" + aba));
+    window.scrollTo(0, 0);
+    try { history.replaceState(null, "", "#" + aba); } catch (e) { /* ignora */ }
+  };
+  $$("nav.lateral button[data-aba]").forEach(b => b.addEventListener("click", () => irPara(b.dataset.aba)));
+  document.addEventListener("click", ev => {
+    const ir = ev.target.closest("[data-ir]");
+    if (ir) { irPara(ir.dataset.ir); if (ir.dataset.rodar) rodarSuite(); return; }
+    const sub = ev.target.closest(".segmentos button[data-sub]");
+    if (sub) {
+      const grupo = sub.parentElement;
+      $$("button", grupo).forEach(b => b.setAttribute("aria-selected", String(b === sub)));
+      $$("button[data-sub]", grupo).forEach(b => { const alvo = document.getElementById(b.dataset.sub); if (alvo) alvo.classList.toggle("ativa", b === sub); });
+      return;
+    }
+    const tb = ev.target.closest("button[data-turno]");
+    if (tb) { TURNO = tb.dataset.turno; $$("button[data-turno]").forEach(b => b.setAttribute("aria-selected", String(b === tb))); renderGrade(); return; }
+    const mb = ev.target.closest("button[data-metodo]");
+    if (mb) { METODO = mb.dataset.metodo; $$("button[data-metodo]").forEach(b => b.setAttribute("aria-selected", String(b === mb))); renderCB(); return; }
+    const al = ev.target.closest("button[data-aluno]");
+    if (al) {
+      const id = Number(al.dataset.aluno), evento = al.dataset.evento;
+      const nome = (DB.porId("aluno", id) || {}).nome;
+      acao($("#msgAlu"), () => SV().alterarStatus(id, evento), r => nome + ": matrícula agora " + r.status + ".");
+      return;
+    }
+    const xd = ev.target.closest("button[data-excluir-dep]");
+    if (xd) { const d = DB.porId("departamento", Number(xd.dataset.excluirDep)); acao($("#msgOrc"), () => DB.excluir("departamento", d.id), "Departamento " + d.codigo + " excluído."); return; }
+    const xc = ev.target.closest("button[data-excluir-cur]");
+    if (xc) { const c = DB.porId("curso", Number(xc.dataset.excluirCur)); acao($("#fCur [data-msg]"), () => DB.excluir("curso", c.id), "Curso " + c.codigo + " excluído."); return; }
+    const cel = ev.target.closest("td[data-aloc]");
+    if (cel) {
+      const id = Number(cel.dataset.aloc);
+      if (window.confirm("Liberar esta sala neste dia e turno?")) acao($("#fAlo [data-msg]"), () => DB.excluir("alocacao", id), "Alocação removida.");
+      return;
+    }
+    const rg = ev.target.closest("button[data-rodar-grupo]");
+    if (rg) { rodarCP(GRUPOS_CP[Number(rg.dataset.rodarGrupo)].ids); return; }
+  });
+
+  // formulários
+  const form = (id, fn, ok) => $(id).addEventListener("submit", ev => {
+    ev.preventDefault();
+    const f = ev.target, v = Object.fromEntries(new FormData(f).entries());
+    if (acao($("[data-msg]", f), () => fn(v, f), ok) !== null) f.reset();
+    renderSelects();
+  });
+  form("#fDep", v => SV().criarDepartamento(v.codigo.trim(), v.nome, num(v.orcamento)), d => "Departamento " + d.codigo + " cadastrado com orçamento de " + brl(d.orcamento_anual) + ".");
+  form("#fDesp", v => SV().registrarDespesa(Number(v.dep), v.descricao, num(v.valor)),
+    r => "Despesa de " + brl(r.despesa.valor) + " registrada. Execução: " + pctFmt(r.percentual) + " — situação " + r.situacao + ". Exige aprovação da diretoria (RN-08): " + (r.exigeDiretoria ? "SIM" : "não") + ".");
+  $("#fOrc").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const v = Object.fromEntries(new FormData(ev.target).entries());
+    if (acao($("#msgOrc"), () => SV().alterarOrcamento(Number(v.dep), num(v.valor)), "Orçamento alterado para " + brl(num(v.valor)) + ".") !== null) ev.target.reset();
+    renderSelects();
+  });
+  form("#fCur", v => SV().criarCurso(v.codigo.trim(), v.nome, num(v.duracao), Number(v.dep)), c => "Curso " + c.codigo + " cadastrado.");
+  form("#fDis", v => SV().criarDisciplina(v.codigo.trim(), v.nome, num(v.ch), num(v.vagas), v.lab === "on", Number(v.curso)), d => "Disciplina " + d.codigo + " cadastrada.");
+  form("#fSal", v => SV().criarSala(v.codigo.trim(), num(v.capacidade), v.tipo), s => "Sala " + s.codigo + " cadastrada.");
+  form("#fAlu", v => SV().cadastrarAluno(v.nome, v.email, v.idade, Number(v.curso)), a => "Aluno cadastrado com matrícula " + a.matricula + ".");
+  $("#fAlo").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const v = Object.fromEntries(new FormData(ev.target).entries());
+    const el = $("[data-msg]", ev.target);
+    const disc = DB.porId("disciplina", Number(v.disc)), sala = DB.porId("sala", Number(v.sala));
+    if (!disc || !sala) { mostrarMsg(el, "erro", "Selecione uma disciplina e uma sala cadastradas.", { codigo: "SELECAO_OBRIGATORIA", camada: "regra" }); return; }
+    let r;
+    try { r = SV().alocar(agendaDoBanco(DB), disc, sala, v.dia, v.turno); }
+    catch (e) { if (e instanceof ErroSGA) { mostrarMsg(el, "erro", e.message, e); renderBanco(); return; } throw e; }
+    salvarEstado(); renderDados();
+    if (r === "ALOCADA") mostrarMsg(el, "ok", disc.codigo + " alocada em " + sala.codigo + " — " + v.dia + " / " + v.turno + ".");
+    else mostrarMsg(el, "erro", MENSAGEM_ALOCACAO[r], { codigo: r, camada: "regra" });
+    if (v.turno !== TURNO) { TURNO = v.turno; $$("button[data-turno]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.turno === TURNO))); renderGrade(); }
+  });
+  $("#btnCarga").addEventListener("click", medirCarga);
+
+  // banco
+  $("#selTabela").addEventListener("change", renderBanco);
+  $("#btnRestaurar").addEventListener("click", () => { restaurarExemplo(); renderDados(); });
+  $("#btnApagar").addEventListener("click", () => {
+    if (!window.confirm("Apagar todos os dados do banco do laboratório?")) return;
+    DB.limpar(); EMAILS = []; DB.sql("-- todas as tabelas esvaziadas", []); salvarEstado(); renderDados();
+  });
+
+  // caixa-preta
+  $("#btnRodarCP").addEventListener("click", () => rodarCP(GRUPOS_CP.flatMap(g => g.ids)));
+  $("#cpConteudo").addEventListener("change", ev => { if (ev.target.id === "modoPrev") { MODO_PREVISAO = ev.target.checked; renderCP(); } });
+
+  // caixa-branca
+  $("#listaCB").addEventListener("change", ev => {
+    const id = ev.target.dataset.caso; if (!id) return;
+    const s = SELECIONADOS[METODO];
+    if (ev.target.checked) { if (!s.includes(id)) s.push(id); } else SELECIONADOS[METODO] = s.filter(x => x !== id);
+  });
+  $("#btnRodarCB").addEventListener("click", rodarCB);
+  $("#btnLimparCB").addEventListener("click", () => { SELECIONADOS[METODO] = []; renderCB(); });
+
+  // suíte
+  $("#btnRodarSuite").addEventListener("click", rodarSuite);
+  $("#soFalhas").addEventListener("change", () => { if (ULTIMA) rodarSuite(); });
+  $("#btnMatriz").addEventListener("click", renderMatriz);
+
+  // defeitos
+  $$(".chave[data-def]").forEach(b => b.addEventListener("click", () => {
+    const d = b.dataset.def;
+    DEF[d] = !DEF[d];
+    b.setAttribute("aria-pressed", String(DEF[d]));
+    document.body.classList.toggle("com-defeito", Object.values(DEF).some(Boolean));
+    ANALISE = null;
+    renderDados(); renderCB(); renderInicio();
+  }));
+
+  // tema
+  $("#btnTema").addEventListener("click", () => {
+    const raiz = document.documentElement;
+    const escuroAgora = raiz.dataset.theme ? raiz.dataset.theme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    raiz.dataset.theme = escuroAgora ? "light" : "dark";
+    try { localStorage.setItem("sga-lab-tema", raiz.dataset.theme); } catch (e) { /* ignora */ }
+  });
+
+  const inicial = (location.hash || "").slice(1);
+  if (inicial && document.getElementById("aba-" + inicial)) irPara(inicial);
+}
+
+/* =====================================================================
+   INICIALIZAÇÃO
+   ===================================================================== */
+(function iniciar() {
+  document.body.insertAdjacentHTML("afterbegin", '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs></svg>');
+  try { const t = localStorage.getItem("sga-lab-tema"); if (t) document.documentElement.dataset.theme = t; } catch (e) { /* ignora */ }
+  if (!carregarEstado()) restaurarExemplo();
+  $("#preSchema").textContent = SCHEMA_SQL;
+  renderRequisitos(); renderDER(); renderPlano(); renderCP(); renderDados(); renderCB(); renderRelatorio(); renderInicio();
+  ligarEventos();
+})();
+</script>
+</body>
+</html>

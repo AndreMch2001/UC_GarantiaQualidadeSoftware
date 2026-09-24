@@ -1,0 +1,5 @@
+target/
+sga.db
+.idea/
+*.iml
+.vscode/
